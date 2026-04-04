@@ -1,0 +1,118 @@
+# WORKLOG — Sessão 2026-04-04
+# Squad: triq-engineering | Presidido por: Yuri | Executor: Orion
+# ================================================================
+
+## FASE 1 — Governança de Infraestrutura (Supabase)
+
+### Migrations aplicadas (5)
+- 001_foundation_tenants_projetos: tenants + projetos (com iqo_global, forma_triangulo_viva, zre_status)
+- 002_core_tarefas_eap_marcos_orcamentos: 5 tabelas core
+- 003_history_mated_decisoes: mated_history, decisoes_mated, historico_projeto
+- 004_pipeline_sprints_fractais_webhooks: sprints_fractais + webhooks_history
+- 005_patch_missing_columns_engine_compat: colunas faltantes (custo, prazo, assertividade, etc.)
+
+### Migration Épico 1 (006)
+- 006_coleta_estimativas_convites: convites_projeto, estimativas_colaborador, calibration_priors
+  + campos novos em tarefas (duracao_otimista, custo_otimista, custo_pessimista)
+  + campos calendário em projetos (unidade_tempo, horas_por_dia, inclui_sabado)
+
+### Resultado: 15 tabelas, todas com RLS, 6 migrations
+
+## FASE 2 — Debate do Squad (38 Decisões)
+
+### Documentos gerados
+- relatorio1.log: Relatório técnico completo de viabilidade
+- tutorial.log: Tutorial técnico com todas as funções, ordem de acionamento e glossário
+
+### Decisões validadas (1-38)
+- 1-12: Sierpinski, cores, consulta no diagrama, sobras, azul, peso, TBZ, CEt dinâmica
+- 13-19: NVO ponderado, MATED composto, distância euclidiana, amortecimento, calendário
+- 20-26: Topologia automática, preenchimento backward, TBZ=buffer, Fever 5 zonas, azul
+- 27-34: Malha fixa, Castle adjacência, TBZ primeiro, compressão, reservas
+- 35-38: Cor fractal=Fever, sanfona detalhada, accordion read-only, Fever nunca embutido
+
+## FASE 3 — Implementação dos Épicos
+
+### Épico 1 — Coleta (COMPLETO)
+- Migration 006 aplicada
+- API: src/app/api/estimativas/route.ts (GET token, POST estimativas)
+- Validação: otimista < pessimista, token JWT, marcar respondido
+
+### Épico 2 — Motor Fractal Sierpinski (COMPLETO)
+- NOVO: src/lib/engine/sierpinski.ts
+  - sierpinskiLayout(): gera malha fixa por nível
+  - generateCells(): subdivisão recursiva Sierpinski
+  - computeAdjacencies(): adjacência por aresta compartilhada
+  - distanciaMalha(): BFS para distância Castle
+  - ordemPropagacaoCastle(): BFS com TBZ first
+
+- NOVO: src/lib/engine/fractal-builder.ts
+  - construirFractaisBackward(): construção backward milestone-driven
+  - Normalização proporcional (regra de 3, NÃO E=1 fixo)
+  - verificarColinearidade(): razões ±5%
+  - Prevenção protocolo não-alfa (detecta Beta/Gamma iminente)
+  - calcularRedistribuicao(): sobras sprint → seguinte
+  - diasUteis(): cálculo de dias úteis
+
+### Épico 3 — MATED Composto + NVO (COMPLETO)
+- NOVO: src/lib/engine/nvo-ponderado.ts
+  - calcularNVOPonderado(): baricentro ponderado (TM peso=Σ+1)
+  - calcularMATEDComposto(): distância euclidiana ponderada
+  - calcularThresholds(): amortecimento proporcional por sprint
+  - calcularPesoComplexidade(): peso por tarefas críticas × duração
+
+### Épico 4 — Castle na Malha Sierpinski (COMPLETO)
+- NOVO: src/lib/engine/castle-sierpinski.ts
+  - propagarNaMalha(): propagação por adjacência geométrica
+  - inicializarCellStates(): estado inicial de cada célula
+  - TBZ absorve primeiro, depois vizinhos ↑ com e^(-λk)
+  - Detecção de TM atingido (impacto residual > 0)
+
+### Épico 5 — Fever Chart 5 Zonas (COMPLETO)
+- ATUALIZADO: src/lib/engine/buffer.ts
+  - FeverZone agora inclui 'azul' (remissão, buffer < 0%)
+  - determinarFeverZone() atualizado para 5 zonas
+
+### Épico 6 — Escopo Ágil + Arquivamento (COMPLETO)
+- CEt dinâmica com E_min/E_max (em fractal-builder.ts)
+- Redistribuição de sobras (calcularRedistribuicao)
+- calibration_priors table criada (externalizar Bayesian)
+
+## FASE 4 — Testes
+
+### Cenários fictícios (5 projetos)
+- Cenário 1: 2 sprints (App Mobile Simples) — 5 testes
+- Cenário 2: 3 sprints (SaaS Dashboard) — 4 testes
+- Cenário 3: 4 sprints (E-commerce) — 4 testes
+- Cenário 4: 5 sprints (FinTech Platform) — 3 testes
+- Cenário 5: 6 sprints (Enterprise ERP) — 5 testes
+
+### Resultado: 21/21 PASSING
+
+## ARQUIVOS CRIADOS/MODIFICADOS
+
+### Novos
+- src/lib/engine/sierpinski.ts (~220 LOC)
+- src/lib/engine/fractal-builder.ts (~300 LOC)
+- src/lib/engine/nvo-ponderado.ts (~180 LOC)
+- src/lib/engine/castle-sierpinski.ts (~200 LOC)
+- src/lib/engine/__tests__/fractal-scenarios.test.ts (~330 LOC)
+- src/app/api/estimativas/route.ts (~150 LOC)
+- relatorio1.log
+- tutorial.log
+- worklog-sessao-2026-04-04.log
+
+### Modificados
+- src/lib/engine/buffer.ts (FeverZone + azul)
+- .env.local (variáveis pipeline)
+
+### Migrations Supabase
+- 001 a 006 (6 migrations, 15 tabelas)
+
+## MÉTRICAS
+
+- Código novo: ~1.380 LOC (engine + API + testes)
+- Testes: 21/21 passing
+- Decisões: 38 validadas
+- Tabelas Supabase: 15 (de 0 para 15)
+- Documentação: ~1.800 linhas (relatorio1 + tutorial + worklog)

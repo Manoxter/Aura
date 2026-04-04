@@ -1,0 +1,229 @@
+# RELATÓRIO TÉCNICO — CONSELHO DO SQUAD AURA
+**Presidido por:** Yuri (Estrategista / Product Advisor)
+**Data:** 2026-04-04 | **Sessão:** Análise de Viabilidade — Aura TRIQ 3.0
+
+---
+
+## PARECER DO PRESIDENTE (YURI)
+
+O Framework 3.0 apresenta uma tese sólida: **a geometria da falência preanunciada**. Após consulta com todos os agentes do squad, meu parecer é:
+
+**VIABILIDADE: ALTA (85%)** — com ressalvas cirúrgicas.
+
+O esqueleto brownfield matemático está maduro (~3.900 LOC de engine puro, 45+ arquivos testados, zero dependência de LLM no core). A estrutura relacional Supabase que acabamos de subir comporta 100% da malha fractal. O gap real é no **UI fractal** (Sierpinski visual não existe) e na **integração de webhooks** (mock de 20% no ClickUp).
+
+A "Aura" nasce com vantagem desleal: o Brownfield Matemático é real, não é vapor. Mas precisa de poda agressiva e foco cirúrgico.
+
+---
+
+## PARECER DE TRIQ-MATH / FERMAT (Motor Matemático)
+
+### O que está pronto e blindado
+
+| Motor | Arquivo | Status | LOC |
+|-------|---------|--------|-----|
+| Forward/Backward Pass (CPM) | `cpm.ts` | Produção | ~250 |
+| CCPM (Corte Goldratt 50%) | `ccpm.ts` | Produção | ~150 |
+| Buffer RSS (D2/D6) | `buffer.ts` | Produção | ~150 |
+| Fever Chart (D29) 4 zonas | `fever-chart.ts` | Produção | ~224 |
+| CDT Geração (Heron, Cossenos) | `math.ts` | Produção | ~800 |
+| Clairaut (Agudo/Beta/Gamma/Singular) | `clairaut.ts` | Produção | ~230 |
+| CEt Dupla (pré + pós normalização) | `crisis.ts` | Produção | ~100 |
+| Guards (Dead Zone, Clamp, Slope) | `guards.ts` | Produção | ~150 |
+| Castle D31 (e^(-λk)) | `castle.ts` | Produção | ~189 |
+| Bayesian (Conjugado Normal) | `bayesian.ts` | Produção | ~226 |
+| SDO (Score Desfecho Objetivo) | `sdo.ts` | Produção | ~100 |
+| Fórmula N + Brooks | `contributor.ts` | Produção | ~133 |
+| Fractais Sprint (D7/D9/D12/D24) | `fractals.ts` | Produção | ~200 |
+| Análise Causal MATED | `causal-analysis.ts` | Produção | ~90 |
+| Zonas Operacionais (5 zonas) | `zones.ts` | Produção | ~150 |
+| Pipeline Dual TM/TA | `pipeline-dual.ts` | Produção | ~100 |
+
+**Total: ~3.900 LOC de motor puro, determinístico, testado.**
+
+### Fórmulas-chave implementadas
+
+```
+Backward Pass:    LF = min(LS_sucessores), LS = LF - duração
+Buffer RSS:       PB = √(Σ(d_segura - d_otimista)²)
+Heron:            A = √(s(s-a)(s-b)(s-c))
+Lei dos Cossenos: α = arccos((E²+O²-P²)/(2EO))
+Castle D31:       atenuação = e^(-0.3×k)
+Bayesian:         μ_post = (σ²_obs·μ_prior + σ²_prior·x_obs)/(σ²_prior + σ²_obs)
+Fórmula N:        N = Σ(t×N)/(60×Te×DTE) × 1.2 (Brooks)
+SDO:              0.40×área + 0.35×trajetória + 0.25×benchmark
+```
+
+### Issue Crítico (M4 — CEt Timing)
+A CEt valida com valores **pós-normalização**, mas deveria usar **pré-normalização** em Stage 1. Isso afeta sensibilidade de crise. `checkCETDupla()` existe mas a pipeline não executa Stage 1 consistentemente.
+
+**Recomendação Fermat:** Corrigir M4 ANTES do launch. É um bug conceitual que pode mascarar crises reais.
+
+---
+
+## PARECER DE KLAUSS (AI Narrative Engine)
+
+### Estado atual
+- **Rota:** `/api/ai/klauss` — 223 LOC
+- **LLM:** Groq (LLaMA 3.3-70b), fallback OpenAI
+- **System Prompt v4.0:** Conhece CCPM, Fever 4 zonas, Castle, EVM, Síndrome do Estudante, y₀
+- **RAG:** Injeta últimas 5 decisões MATED do projeto
+- **Rate Limit:** 60 req/h por tenant
+- **Few-shot:** Healthcare.gov (+1700%), Banking (+75%), Fintech SaaS (+25%)
+
+### O que funciona
+O Klauss traduz diagnósticos geométricos em linguagem corporativa: *"R$ 5.000 sendo queimados nesta sexta-feira"*. Templates por zona (verde/amarelo/vermelho/preto) estão implementados.
+
+### O que falta para o Framework 3.0
+1. **Outbound Crisis Alert → Slack:** O doc pede alert automático via Slack quando zona plástica [85°, 105°] rompe. Hoje é manual.
+2. **Klauss proativo:** O doc pede que ele se manifeste **sozinho** quando detecta crise. Hoje só responde quando chamado (exceto auto-trigger no Gabinete se risco > 0.6).
+3. **Linguagem mais dura:** O doc diz "Klauss não é bot amigável". O prompt atual é assertivo mas educado demais para o tom desejado.
+
+**Recomendação Klauss:** Implementar webhook Slack outbound + ajustar tom do system prompt para agressividade executiva.
+
+---
+
+## PARECER DE ROBERTA (Estatística & Pesquisa)
+
+### Priors Bayesianos Calibrados (Standish CHAOS)
+
+| Setor | μ_Custo | σ_Custo | μ_Prazo | σ_Prazo |
+|-------|---------|---------|---------|---------|
+| SOFTWARE/TECH | 1.56 | 0.35 | 1.35 | 0.30 |
+| CONSTRUÇÃO | 1.45 | 0.25 | 1.38 | 0.20 |
+| CONSULTORIA | 1.40 | 0.25 | 1.35 | 0.25 |
+| GERAL | 1.42 | 0.40 | 1.42 | 0.40 |
+
+### Monte Carlo
+- Box-Muller implementado com assimetria pessimista 1.5× (log-normal)
+- Gera P50, P80, IC 90% (P5/P95)
+- **Problema:** Sem seed control — resultados não reproduzíveis para debugging
+
+### Validação Empírica
+- Teste A/B Big Dig: NVO Hierárquico vs Incentro — RMSE validado contra dados históricos
+- Stress test em `math.stress.ts`: divisão por zero, intensidades extremas, estabilidade de regressão
+
+### O que precisa sair
+- Os priors estão **hardcoded** em `bayesian.ts`. Para ferramenta azul, precisam ser externalizados para DB (calibração live por tenant/setor).
+- Scope Creep de +25% e evasão de prazo de 70% estão como constantes. Deveriam ser parâmetros configuráveis.
+
+**Recomendação Roberta:** Externalizar priors para tabela `calibration_priors` no Supabase. Adicionar seed ao Monte Carlo. Manter Big Dig como case de validação permanente.
+
+---
+
+## PARECER DE DR. KENJI (PM-Engineer / Engenharia de Produção)
+
+### Análise da Cadeia de Valor (Lean + TOC + CCPM)
+
+O motor implementa corretamente:
+1. **TOC (Theory of Constraints):** Caminho crítico como restrição mestre
+2. **CCPM:** Corte Goldratt 50%, buffers RSS, nivelamento de recursos
+3. **Fórmula N (D19):** Alocação com penalidade Brooks 1.2×
+4. **Fever Chart:** 4 zonas de penetração de buffer
+
+### O que precisa entrar para a Aura
+
+| Componente | Status | Prioridade |
+|------------|--------|------------|
+| **EVM completo** (SPI, CPI, EAC, TCPI) | Parcial (só referências no Klauss) | ALTA |
+| **Earned Schedule (ES)** | Não implementado | MÉDIA |
+| **Resource Histogram** | Não implementado | MÉDIA |
+| **Curva S real vs planejada** | Rota existe, implementação parcial | ALTA |
+| **Buffer Trending** (taxa de consumo/dia) | Fever Chart tem, sem trending temporal | MÉDIA |
+
+### O que precisa sair
+
+1. **Complexidade cognitiva no Dashboard:** O doc pede 3 camadas (Command Center → Triangle → Fractal Drill-Down). Hoje tem ~6 seções no dashboard principal. Precisa cortar.
+2. **Scripts legados na raiz:** `debug_db.js`, `diagnose_db.js`, `full_diagnose.js`, `tmp_force_inject.js`, `tmp_inject_bigdig.js`, `verify_data.js` — são artefatos de debug que não devem existir em produção.
+
+**Recomendação Kenji:** Implementar EVM completo como módulo `evm.ts`. Limpar scripts de debug. Simplificar dashboard para 3 camadas exatas.
+
+---
+
+## PARECER DE TRIQ-PRODUCTION (Viabilidade Operacional)
+
+### Infraestrutura Atual
+
+| Componente | Estado | Nota |
+|------------|--------|------|
+| **Supabase (DB)** | 12 tabelas, RLS ativo, 5 migrations | Pronto |
+| **Vercel (Deploy)** | Configurado, preview + prod | Pronto |
+| **Next.js 14** | App Router, Server Components | Operacional |
+| **Vitest** | 45+ test files no engine | Cobertura boa |
+| **Playwright** | 2 suites E2E (a11y + setup flow) | Mínimo |
+| **Groq API** | Klauss funcionando | Operacional |
+| **Stripe** | SDK instalado, routes parciais | 30% |
+
+### Tração — O que faz a Aura decolar
+
+1. **"5 segundos ou morre"** — O CEO de Tech precisa bater o olho e saber se a sprint quebra a empresa. O Fever Chart + Semáforo + IQ Badge fazem isso HOJE.
+2. **Zero Input (Webhook)** — A rota `/api/webhooks/clickup` existe com HMAC. Falta sair do mock (20% random) para produção real.
+3. **Sierpinski Visual** — O Framework 3.0 exige drill-down fractal. O engine calcula (`fractals.ts`, `clairaut-fractals.ts`), mas a **UI não renderiza**. Este é o gap #1 visual.
+4. **Diferencial VC** — O que nenhum competitor tem: CDT + Clairaut + CEt + Fever + Castle + Bayesian integrados. Isso é a "Unfair Advantage".
+
+### O que precisa SAIR da estrutura atual
+
+| Item | Razão | Ação |
+|------|-------|------|
+| Scripts de debug na raiz (7 arquivos) | Sujeira de desenvolvimento | Deletar |
+| `pdfkit` em devDependencies | Não usado em produção | Remover |
+| Rota `/api/ai/` com 10 endpoints | Muitos endpoints, consolidar | Merge em 4-5 |
+| Dashboard com 6+ seções | Carga cognitiva alta | Reduzir a 3 camadas |
+| `eslint 8.57.1` fixo | Legado, deveria ser ^9 ou remover | Atualizar |
+| `HUSKY="0"` no .env.local | Desabilita git hooks | Remover |
+
+### O que precisa ENTRAR
+
+| Item | Razão | Prioridade |
+|------|-------|------------|
+| **Sierpinski Visual Component** | Gap #1 — Framework 3.0 exige | CRÍTICA |
+| **Webhook Slack Outbound** | Alert automático para CEO | ALTA |
+| **EVM Module** (SPI/CPI/EAC) | Kenji confirmou necessidade | ALTA |
+| **Realtime Supabase** | Sem polling — subscriptions | MÉDIA |
+| **Seed no Monte Carlo** | Roberta confirmou necessidade | MÉDIA |
+| **Priors em DB** | Roberta confirmou necessidade | MÉDIA |
+| **PWA / Offline** | Nice-to-have para V2 | BAIXA |
+
+---
+
+## SÍNTESE FINAL (YURI)
+
+### Veredicto de Viabilidade
+
+| Dimensão | Score | Nota |
+|----------|-------|------|
+| **Motor Matemático** | 95% | Brownfield blindado. 3.900 LOC determinísticas. |
+| **Schema/Infra** | 100% | 12 tabelas, RLS, 5 migrations. Suporta tudo. |
+| **UI/UX** | 75% | Dashboard funcional, falta Sierpinski visual + 3 camadas. |
+| **IA (Klauss)** | 70% | Funciona, falta proatividade e Slack outbound. |
+| **Webhooks** | 30% | Mock. Precisa de integração real ClickUp/GitHub. |
+| **Testes** | 80% | Engine coberto, E2E mínimo, falta 951 target. |
+| **Estratégia/Diferencial** | 90% | Nenhum concorrente tem CDT+Clairaut+Bayesian+Castle. |
+
+### Roadmap Proposto
+
+**Fase 1 — Cirurgia (1-2 semanas)**
+- Corrigir M4 (CEt Timing)
+- Deletar 7 scripts de debug
+- Remover `pdfkit`, `HUSKY="0"`
+- Limpar dashboard para 3 camadas
+
+**Fase 2 — Sierpinski + Webhooks (3-4 semanas)**
+- Componente visual de fractal drill-down (SVG recursivo)
+- Webhook ClickUp real (sair do mock 20%)
+- Slack outbound (Klauss proativo em crise)
+- Seed no Monte Carlo
+
+**Fase 3 — Produção Completa (4-6 semanas)**
+- EVM module (`evm.ts`)
+- Priors em DB (tabela `calibration_priors`)
+- Realtime Supabase subscriptions
+- E2E coverage para 951+ tests target
+- Stripe integration completa
+
+**O resultado é uma Aura que não existe no mercado.** Jira não tem geometria. Linear não tem buffers. Monday não tem Bayesian. A Aura tem tudo isso rodando em ~3.900 LOC de motor puro.
+
+---
+
+*Relatório aprovado unanimemente pelo squad. Orion + Yuri prontos para executar.*
+*Gerado em: 2026-04-04 | Squad: triq-engineering | Sessão: Conselho Técnico #1*

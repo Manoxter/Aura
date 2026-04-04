@@ -1,0 +1,15 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Login',
+  description:
+    'Acesse sua conta Aura para gerenciar projetos com o Triângulo da Qualidade.',
+}
+
+export default function LoginLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return <>{children}</>
+}

@@ -1,0 +1,1116 @@
+# TUTORIAL TÉCNICO — AURA: MOTOR MATEMÁTICO E FLUXO OPERACIONAL
+# ================================================================
+# Versão: 3.0.0 | Data: 2026-04-04
+# Validado por: Squad triq-engineering (Yuri, Fermat, Klauss, Roberta, Kenji, SM, QA)
+#
+# Este documento explica CADA função matemática e ferramenta do motor Aura:
+# quando entra, como funciona, por que existe, e em que ordem é acionada.
+# Siglas são traduzidas na primeira aparição e compiladas no GLOSSÁRIO ao final.
+# ================================================================
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 1 — VISÃO GERAL DO FLUXO
+# ════════════════════════════════════════════════════════════════════
+
+O motor Aura opera em 6 fases sequenciais. Cada fase aciona funções
+matemáticas específicas. O fluxo completo é:
+
+  FASE 1: Coleta de Estimativas (input dos colaboradores)
+     ↓
+  FASE 2: CPM (Critical Path Method — Método do Caminho Crítico) + Backward Pass
+     ↓
+  FASE 3: CCPM (Critical Chain Project Management — Gestão por Cadeia Crítica)
+     ↓
+  FASE 4: Construção do TM (Triângulo Mestre) e Fractais (Sprints)
+     ↓
+  FASE 5: Monitoramento em Tempo Real (MATED, Fever Chart, Castle)
+     ↓
+  FASE 6: Arquivamento e Aprendizado (SDO, Bayesian, Capital Intelectual)
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 2 — FASE 1: COLETA DE ESTIMATIVAS
+# ════════════════════════════════════════════════════════════════════
+
+## 2.1 O que acontece
+
+O PM (Project Manager — Gerente de Projeto) define o escopo (WBS — Work
+Breakdown Structure / EAP — Estrutura Analítica do Projeto) e recruta
+colaboradores. Cada colaborador recebe um email com link único (token JWT —
+JSON Web Token) e responde SEM precisar acessar o Aura:
+
+  Para cada tarefa atribuída ao colaborador:
+    - Tempo otimista (em horas): menor tempo possível se tudo correr bem
+    - Tempo pessimista (em horas): tempo se tudo der errado
+    - Custo otimista (R$): menor custo possível
+    - Custo pessimista (R$): custo se tudo complicar
+    - Papel no sprint: função que desempenhará
+
+## 2.2 Por que funciona
+
+O CCPM (Cadeia Crítica) de Goldratt exige duas estimativas por tarefa:
+otimista e pessimista. A diferença entre elas é a "gordura" — a margem
+de segurança que cada pessoa naturalmente embute. O motor Aura remove
+essa gordura individualmente e a redistribui como buffer coletivo
+(proteção do projeto, não da tarefa individual).
+
+## 2.3 Quando o sistema avança
+
+Somente quando 100% dos colaboradores responderam. O sistema monitora
+em tempo real: "X de Y responderam". Quando completo:
+  → Dispara FASE 2 automaticamente
+  → Notifica PM/PO (Product Owner — Dono do Produto): "Projeto pronto
+    para cálculo"
+
+## 2.4 Funções envolvidas
+
+  Arquivo: src/app/api/estimativas/ (a ser criado)
+  - receberEstimativa(): salva resposta do colaborador via API pública
+  - verificarCompletude(): checa se todos responderam
+  - notificarPM(): dispara notificação quando 100%
+
+## 2.5 Armazenamento
+
+  Tabela: tarefas
+    - duracao_estimada → tempo pessimista (usado como "seguro")
+    - Campos adicionais necessários:
+      - duracao_otimista (novo)
+      - custo_otimista (novo)
+      - custo_pessimista (novo)
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 3 — FASE 2: CPM + BACKWARD PASS
+# ════════════════════════════════════════════════════════════════════
+
+## 3.1 O que é o CPM (Critical Path Method — Método do Caminho Crítico)
+
+O CPM calcula o tempo mínimo para completar o projeto, considerando
+as dependências entre tarefas. Ele faz dois passos:
+
+### Passo 1 — Forward Pass (Passagem para Frente)
+
+Calcula o início e fim mais cedo possível de cada tarefa.
+
+  Fórmulas:
+    ES (Early Start — Início Mais Cedo) = max(EF de todas as predecessoras)
+    EF (Early Finish — Fim Mais Cedo) = ES + duração_estimada
+
+  Lógica: "Qual o mais cedo que posso começar esta tarefa,
+           dado que preciso esperar as anteriores terminarem?"
+
+  Arquivo: src/lib/engine/cpm.ts → calculateCPMLocal()
+
+### Passo 2 — Backward Pass (Passagem para Trás)
+
+Calcula o início e fim mais tarde possível sem atrasar o projeto.
+ESTE É O PASSO CENTRAL DA AURA — tudo é construído de trás para frente.
+
+  Fórmulas:
+    LF (Late Finish — Fim Mais Tarde) = min(LS de todas as sucessoras)
+    LS (Late Start — Início Mais Tarde) = LF - duração_estimada
+
+  Se a tarefa não tem sucessora:
+    LF = duração total do projeto (Ponto Ômega)
+
+  Arquivo: src/lib/engine/cpm.ts → calculateCPMLocal()
+
+### Passo 3 — Folga e Caminho Crítico
+
+  Fórmulas:
+    Folga Total = LS - ES (ou LF - EF, são equivalentes)
+    Folga Livre = ES_sucessora - EF_tarefa_atual
+
+  Se Folga Total = 0 → tarefa está no Caminho Crítico
+  O Caminho Crítico é a sequência mais longa sem folga — qualquer
+  atraso nele atrasa o projeto inteiro.
+
+  Arquivo: src/lib/engine/cpm.ts → findAllCriticalPaths()
+
+## 3.2 Por que o Backward Pass é central
+
+Na Aura, o Ponto Ômega (data de entrega) é a âncora. Tudo se calcula
+a partir dele para trás:
+  - "Se preciso entregar dia 30, quando é o mais tarde que posso
+     começar cada tarefa sem atrasar?"
+  - Isso garante que buffers ficam ANTES da entrega, não depois.
+
+## 3.3 Enumeração de Caminhos Críticos (PMBOK)
+
+O motor encontra TODOS os caminhos críticos (pode haver mais de um)
+e os rankeia:
+  - Primário: maior duração de tarefa individual (mais arriscado)
+  - Secundário: por duração total (desempate)
+  - Limite: 100 caminhos (performance)
+
+  Arquivo: src/lib/engine/cpm.ts → findAllCriticalPaths()
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 4 — FASE 3: CCPM (CADEIA CRÍTICA)
+# ════════════════════════════════════════════════════════════════════
+
+## 4.1 Corte de Estimativa — Decisão D1
+
+Goldratt descobriu que humanos embutem ~50% de gordura nas estimativas.
+O CCPM remove essa gordura e a transforma em buffer coletivo.
+
+  Fórmula (Corte Goldratt):
+    duração_agressiva = max(1, ceil(duração_pessimista × 0.5))
+    custo_agressivo = custo_pessimista × (duração_agressiva / duração_pessimista)
+
+  Exemplo:
+    Colaborador estimou: otimista=3 dias, pessimista=10 dias
+    Gordura = 10 - 3 = 7 dias
+    Duração agressiva = max(1, ceil(10 × 0.5)) = 5 dias
+    O motor usa 5 dias para planejamento. Os 5 dias restantes
+    vão para o buffer coletivo.
+
+  Arquivo: src/lib/engine/ccpm.ts → cortarEstimativa()
+
+  Por que funciona: Remove a Síndrome do Estudante (deixar para a
+  última hora) e a Lei de Parkinson (trabalho expande para preencher
+  o tempo disponível). A proteção individual vira proteção coletiva.
+
+## 4.2 Buffer do Projeto (PB — Project Buffer) — Decisão D2
+
+O PB protege a data de entrega. É calculado pelo método RSS
+(Root Sum of Squares — Raiz da Soma dos Quadrados):
+
+  Fórmula:
+    gordura_i = duração_pessimista_i - duração_otimista_i
+    PB = ceil(√(Σ gordura_i²))
+
+  Exemplo com 3 tarefas no caminho crítico:
+    Gorduras: 7, 5, 3 dias
+    PB = ceil(√(49 + 25 + 9)) = ceil(√83) = ceil(9.11) = 10 dias
+
+  Arquivo: src/lib/engine/buffer.ts → calcularProjectBuffer()
+
+  Por que RSS e não soma simples: Pela lei das probabilidades,
+  é improvável que TODAS as tarefas atrasem ao máximo simultaneamente.
+  RSS reflete a incerteza estatística real (raiz da variância).
+
+## 4.3 Buffer de Custo (CB — Cost Buffer) — Decisão D6
+
+Mesmo princípio do PB, mas para orçamento:
+
+  Fórmula:
+    gordura_custo_i = custo_pessimista_i - custo_otimista_i
+    CB = ceil(√(Σ gordura_custo_i²))
+
+  Arquivo: src/lib/engine/buffer.ts → calcularCostBuffer()
+
+## 4.4 Feeding Buffers (FB — Buffers de Alimentação)
+
+Protegem o caminho crítico contra atrasos de caminhos não-críticos:
+
+  Onde inserir: no ponto onde um caminho não-crítico ALIMENTA
+  (se conecta a) o caminho crítico.
+
+  Fórmula: RSS das gorduras do caminho não-crítico.
+
+  Arquivo: src/lib/engine/buffer.ts → calcularFeedingBuffers()
+
+## 4.5 Nivelamento de Recursos
+
+Detecta conflitos (mesmo recurso alocado em 2 tarefas simultâneas)
+e resolve atrasando a tarefa com mais folga:
+
+  Algoritmo: Greedy iterativo (max 100 iterações)
+    1. Detectar conflito de recurso
+    2. Identificar tarefa com maior folga
+    3. Atrasar essa tarefa em 1 unidade
+    4. Repetir até resolver
+
+  Arquivo: src/lib/engine/ccpm.ts → nivelarRecursos()
+
+## 4.6 Fórmula N — Alocação de Recursos — Decisão D19
+
+Calcula quantos recursos adicionais são necessários:
+
+  Fórmula:
+    N = Σ(t_i × N_i) / (60 × Te × DTE)
+
+  Onde:
+    t_i = tempo estimado da tarefa i (minutos)
+    N_i = recursos necessários para tarefa i
+    Te = horas disponíveis por dia do time
+    DTE = dias de trabalho efetivo restantes
+
+  Fator Brooks: Se N ≥ 2 → multiplicar por 1.2
+    (Lei de Brooks: adicionar pessoas a um projeto atrasado
+     o atrasa mais, devido ao overhead de comunicação)
+
+  Resultado: n_extra = ceil(N × fator_brooks) - recursos_atuais
+
+  Arquivo: src/lib/engine/contributor.ts → calcularFormulaN()
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 5 — FASE 4: CONSTRUÇÃO DO TM E FRACTAIS
+# ════════════════════════════════════════════════════════════════════
+
+## 5.1 O TM (Triângulo Mestre)
+
+O TM é a representação geométrica do projeto inteiro. Seus 3 lados:
+
+  Verde  = E (Escopo)   → base do triângulo
+  Azul   = C (Custo)    → lado esquerdo (eixo O — Orçamento)
+  Amarelo = P (Prazo)   → lado direito
+
+  O TM NÃO é uma função. É um DIAGRAMA. Cada ponto dentro dele
+  tem significado em termos de prazo e custo.
+
+### 5.1.1 Geração do CDT (Custo-Duração-Triângulo)
+
+O CDT é gerado a partir das curvas de custo e prazo do projeto:
+
+  Entradas:
+    - f_custo(t): curva acumulada de custo ao longo do tempo
+    - f_prazo(t): curva de progresso do prazo ao longo do tempo
+    - dia_atual: dia corrente do projeto
+    - area_baseline: área de referência (TM imutável)
+
+  Saída: CDTResult com triângulo (3 vértices), área, ângulos, protocolo
+
+  Arquivo: src/lib/engine/math.ts → gerarTrianguloCDT()
+
+### 5.1.2 Normalização
+
+Os lados são normalizados para que E (Escopo) = 1.0:
+
+  E_norm = 1.0 (âncora fixa)
+  P_norm = prazo_real / prazo_baseline
+  C_norm = custo_real / custo_baseline
+
+  Se P_norm = 1.0 → prazo exatamente no planejado
+  Se P_norm = 1.9 → prazo a 190% do planejado (90% de estouro)
+  Se C_norm = 0.8 → custo a 80% do planejado (20% de economia)
+
+  Arquivo: src/lib/engine/math.ts → normalizeAnchor()
+
+### 5.1.3 CEt (Condição de Existência do Triângulo)
+
+Antes de construir qualquer triângulo, verificamos se ele PODE existir.
+Um triângulo existe se e somente se:
+
+  E + C > P   (escopo + custo maior que prazo)
+  E + P > C   (escopo + prazo maior que custo)
+  C + P > E   (custo + prazo maior que escopo)
+
+  Se QUALQUER dessas falhar → triângulo não existe → CRISE.
+  O projeto é geometricamente inviável e precisa de recálculo.
+
+  Violações e significado:
+    E + C ≤ P → "Prazo excessivo — escopo e orçamento não sustentam"
+    E + P ≤ C → "Custo excessivo — escopo e prazo não comportam"
+    C + P ≤ E → "Escopo inviável — custo e prazo insuficientes"
+
+  Arquivo: src/lib/engine/crisis.ts → checkCDTExistence()
+
+### 5.1.4 CEt Dupla (Validação em 2 estágios)
+
+  Estágio 1 (Pré-normalização): valida com valores brutos (dias, R$)
+  Estágio 2 (Pós-normalização): valida com valores normalizados
+
+  Ambos devem passar. Se Stage 1 falha mas Stage 2 passa, há risco
+  oculto que a normalização mascarou.
+
+  Arquivo: src/lib/engine/crisis.ts → checkCETDupla()
+
+### 5.1.5 CEt Dinâmica (Escopo Mutável — Decisão 11)
+
+Em gestão ágil, escopo muda. A CEt acomoda isso com limites:
+
+  E_min = escopo mínimo viável (MVP — Minimum Viable Product)
+  E_max = escopo máximo aprovado (backlog completo)
+
+  Se E_novo ∈ [E_min, E_max] → CEt recalcula normalmente
+  Se E_novo < E_min → ALERTA: "Escopo abaixo do viável"
+  Se E_novo > E_max → ALERTA: "Scope creep detectado"
+
+  Corte de escopo → base do triângulo ENCOLHE
+  Acréscimo de escopo → base CRESCE
+
+## 5.2 Ângulos do Triângulo — Lei dos Cossenos
+
+Cada ângulo do triângulo revela a saúde de uma dimensão:
+
+  Fórmulas (Lei dos Cossenos):
+    α (alpha) = arccos((E² + C² - P²) / (2×E×C))
+      → ângulo entre Escopo e Custo, oposto ao Prazo
+      → Se α grande → Prazo dominando (pressão temporal)
+
+    ω (omega) = arccos((E² + P² - C²) / (2×E×P))
+      → ângulo entre Escopo e Prazo, oposto ao Custo
+      → Se ω grande → Custo dominando (pressão financeira)
+
+    ε (epsilon) = arccos((P² + C² - E²) / (2×P×C))
+      → ângulo entre Prazo e Custo, oposto ao Escopo
+      → Se ε grande → Escopo dominando (scope creep)
+
+  Propriedade: α + ω + ε = 180° (sempre)
+
+  Arquivo: src/lib/engine/math.ts → calcularAngulos()
+
+## 5.3 Classificação Clairaut — Protocolo Morfológico
+
+Após calcular os ângulos, o motor classifica o triângulo:
+
+### Protocolo Agudo (todos os ângulos < 90°)
+  Significado: Projeto equilibrado. Nenhuma dimensão domina.
+  Ação: Manter curso. Monitoramento padrão.
+  IR (Intrinsic Risk — Risco Intrínseco) = 1 - (ε/90)
+    Varia de 0 (risco zero) a 1 (risco máximo)
+
+### Protocolo Beta (ω > 90° — Custo obtuso)
+  Significado: Custo está dominando. Orçamento sob pressão.
+  Ação: Refletir reta de custo (m → -m). Custo vira GUIA (âncora).
+  Risco direcional: Rα = max(0, (α-45)/45)
+
+### Protocolo Gamma (α > 90° — Prazo obtuso)
+  Significado: Prazo está dominando. Cronograma sob pressão.
+  Ação: Transladar paralelamente. Prazo vira GUIA (âncora).
+  Risco direcional: Rω = max(0, (ω-45)/45)
+
+### Singular (qualquer ângulo = 90° ± 0.01°)
+  Significado: Ponto de inflexão. Decisão IMEDIATA necessária.
+  Ação: HALT — pausar e recalcular.
+
+  Arquivo: src/lib/engine/clairaut.ts → sintetizarClairaut()
+
+  Por que funciona: A classificação geométrica traduz relações
+  abstratas entre custo/prazo/escopo em FORMAS visuais. Um triângulo
+  obtuso se "vê" imediatamente — é mais largo que alto, ou vice-versa.
+  O gestor não precisa ler números.
+
+## 5.4 Guards (Proteções Numéricas)
+
+O motor usa 5 guardas para evitar erros de ponto flutuante:
+
+  G1 — Dead Zone: mc²-mp² ≈ ±0.05 (fronteira entre protocolos)
+    Se discriminante está na dead zone → classificação ambígua → cautela
+
+  G2 — Pré-classificação: analisa sinais das slopes antes de calcular
+    ângulos completos (atalho rápido)
+
+  G3 — Clamp de Cosseno: limita cos(x) a [-0.9999, 0.9999]
+    Evita NaN no arccos (domínio matemático: [-1, 1])
+
+  G4 — Viabilidade Visual: sin(ângulo) > 0.02 (≈1.15°)
+    Triângulos muito finos são invisíveis no diagrama
+
+  G5 — Noise Guard: slope < 1e-4 → considerar zero
+    Evita classificar ruído numérico como tendência
+
+  Arquivo: src/lib/engine/guards.ts
+
+## 5.5 Construção dos Fractais (Sprints) — Backward
+
+### 5.5.1 Malha Sierpinski
+
+A malha é a estrutura FIXA do projeto. Não muda depois de criada.
+
+  Nível = ceil(log2(N)) onde N = número de sprints
+
+  Posições ↑ (apontando para cima) = slots para sprints
+  Posições ↓ (apontando para baixo) = TBZ (Transition Buffer Zones)
+
+  Preenchimento backward:
+    - Último sprint (mais perto do Ômega) → topo da malha
+    - Primeiro sprint → base-esquerda
+    - Posições ↑ não preenchidas → reserva (tracejada)
+    - Posições ↓ → TBZ sempre (buffers de transição)
+
+  Mapa de capacidade:
+    Nível 1: até 3 sprints (3↑ + 1↓)
+    Nível 2: até 6 sprints (6↑ + 3↓)
+    Nível 3: até 12 sprints (9↑ + ... ↓)
+
+### 5.5.2 Normalização Proporcional dos Fractais — Decisão 21
+
+CADA fractal herda proporções do TM por REGRA DE TRÊS.
+NÃO é E=1.0 por sprint. É E proporcional ao escopo do sprint.
+
+  Fórmulas:
+    E'_sprint_i = E_tm × (escopo_sprint_i / escopo_total)
+    P'_sprint_i = P_tm × (prazo_liquido_sprint_i / prazo_liquido_total)
+    C'_sprint_i = C_tm × (custo_sprint_i / custo_total)
+
+  Verificação: Σ(E'_i) = E_tm (soma dos escopos = escopo total)
+  Verificação: Σ(P'_i) ≈ P_tm (soma dos prazos ≈ prazo total, com TBZ)
+  Verificação: Σ(C'_i) ≈ C_tm (soma dos custos ≈ custo total)
+
+  Exemplo:
+    TM: E=1.0, P=1.9, C=1.3
+    Sprint 1 tem 40% do escopo:
+      E'_s1 = 1.0 × 0.40 = 0.40
+      P'_s1 = 1.9 × (prazo_s1 / prazo_total)
+      C'_s1 = 1.3 × (custo_s1 / custo_total)
+
+  Arquivo: src/lib/engine/fractals.ts → buildSprintTriangle() (a refatorar)
+
+### 5.5.3 Teste de Colinearidade — Decisão 21
+
+Após construir todos os fractais, verificamos se estão alinhados ao TM:
+
+  Para cada fractal i:
+    razao_E = E'_i / E_tm
+    razao_P = P'_i / P_tm
+    razao_C = C'_i / C_tm
+
+    Se razao_E ≈ razao_P ≈ razao_C (tolerância ±5%)
+      → Colinear (fractal proporcional ao TM)
+    Senão
+      → Desvio detectado → alerta + sugestão de realocação
+
+  Significado: Na malha Sierpinski, todos os sub-triângulos mantêm a
+  mesma orientação geométrica do TM. Se um fractal desvia, a malha
+  "rasga" — Castle detecta e propaga o alerta.
+
+### 5.5.4 Prevenção de Protocolo Não-Alfa — Decisão 29 estendida
+
+Se o motor detectar que um fractal caminha para Beta ou Gamma,
+ANTES de classificar, sugere realocação:
+
+  Beta iminente (custo pressionado):
+    → "Realocar R$ X do buffer de custo do Sprint N+1 para Sprint N"
+
+  Gamma iminente (prazo pressionado):
+    → "Mover Dev Y da tarefa Z para tarefa W (caminho crítico)"
+
+  O objetivo é manter TODOS os fractais em protocolo Alfa (equilibrado).
+
+### 5.5.5 Modos Clairaut por Sprint — Decisão D23
+
+  Clairaut COMPLETO: aplicado ao TM total + último sprint ativo
+    (classificação completa com 3 ângulos + protocolo + IR)
+
+  Clairaut SIMPLIFICADO: sprints intermediários
+    (apenas α calculado, sem protocolo completo)
+
+  TBZ: SEM Clairaut (são buffers, não sprints)
+
+  Arquivo: src/lib/engine/clairaut-fractals.ts → aplicarClairautFractais()
+
+## 5.6 Área do Triângulo — Fórmula de Heron
+
+A área é o indicador principal de qualidade do projeto:
+
+  Fórmula de Heron:
+    s = (E + P + C) / 2          (semi-perímetro)
+    Área = √(s × (s-E) × (s-P) × (s-C))
+
+  Se Área cresce → projeto está se expandindo (pode ser bom ou ruim)
+  Se Área encolhe → projeto está comprimindo (risco)
+  Se Área = 0 → triângulo degenerou → CEt violada → CRISE
+
+  Arquivo: src/lib/engine/math.ts → areaTri()
+  Arquivo: src/lib/engine/fractals.ts → areaHeron()
+
+## 5.7 Geometria do Triângulo — Pontos Especiais
+
+### Baricentro (Centro de Massa)
+
+  Fórmula:
+    G = ((x_A + x_B + x_C) / 3, (y_A + y_B + y_C) / 3)
+
+  Significado: ponto de equilíbrio do triângulo.
+  No modelo Aura: cada fractal tem seu baricentro, e o TM tem o dele.
+
+  Arquivo: src/lib/engine/triangle-logic.ts → calculateBarycenter()
+
+### Triângulo Órtico (ZRE — Zona de Resiliência Executiva)
+
+  O triângulo órtico é formado pelos pés das 3 alturas do triângulo
+  original. Representa a zona ÓTIMA de operação.
+
+  Construção:
+    Para cada vértice, projetar perpendicularmente sobre o lado oposto.
+    Os 3 pontos de projeção formam o triângulo órtico.
+
+  Significado: decisões dentro do ZRE estão na zona de resiliência.
+  Fora do ZRE → vulnerabilidade crescente.
+
+  Arquivo: src/lib/engine/triangle-logic.ts → calculateOrthicTriangle()
+
+### Incentro (Centro do Círculo Inscrito)
+
+  Fórmula:
+    I = (a×A + b×B + c×C) / (a + b + c)
+    Onde a, b, c = lados opostos aos vértices A, B, C
+
+  Arquivo: src/lib/engine/triangle-logic.ts → calculateIncenter()
+
+### NVO (Núcleo de Viabilidade Operacional) — Decisão 13
+
+  O NVO é o ponto ótimo para decisões. No modelo fractal, é o
+  baricentro PONDERADO de todos os triângulos:
+
+  Fórmula:
+    w_tm = Σ(w_sprints) + 1                (peso dominante)
+    w_si = complexidade_sprint_i            (peso refinado)
+
+    NVO = (w_tm × G_tm + Σ(w_si × G_si)) / (w_tm + Σ(w_si))
+
+  A decisão ótima é a mais próxima do NVO.
+  O NVO se move à medida que os sprints evoluem.
+
+## 5.8 Pipeline Dual: TM (baseline) vs TA (real)
+
+  TM = Triângulo Mestre (baseline, calculado no dia 0, IMUTÁVEL)
+  TA = Triângulo Atual (recalculado a cada medição)
+
+  O TM nunca muda. O TA reflete a execução real.
+  A diferença entre TM e TA é o MATED.
+
+  Arquivo: src/lib/engine/pipeline-dual.ts → executarPipelineDual()
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 6 — FASE 5: MONITORAMENTO EM TEMPO REAL
+# ════════════════════════════════════════════════════════════════════
+
+## 6.1 MATED (Morphological-Analytical Triangle Equilibrium Diagnostics)
+## (Diagnóstico de Equilíbrio Triangular Morfológico-Analítico)
+
+### 6.1.1 MATED Simples (distância euclidiana)
+
+  Fórmula:
+    MATED = √((x_TA - x_NVO)² + (y_TA - y_NVO)²)
+
+  Quanto MENOR o MATED, mais saudável o projeto.
+
+  Arquivo: src/lib/engine/math.ts → calcularMATED()
+
+### 6.1.2 MATED Composto (multi-baricentro) — Decisão 14
+
+  No modelo fractal, o MATED considera TODOS os baricentros:
+
+  Fórmula:
+    MATED_global = dist_euclidiana(Ponto_Operação, NVO_ponderado)
+    MATED_sprint_i = dist_euclidiana(Ponto_Operação_si, G_si)
+
+    MATED_composto = (w_tm × MATED_global + Σ(w_si × MATED_si)) / Σ(w)
+
+  A decisão ótima minimiza MATED_composto.
+
+### 6.1.3 Zonas MATED
+
+  OTIMO:  desvio < 5%   → Projeto centrado
+  SEGURO: 5% ≤ desvio < 15%  → Monitoramento normal
+  RISCO:  15% ≤ desvio < 30% → Atenção — sugerir ação
+  CRISE:  desvio ≥ 30%  → Ação imediata
+
+  Arquivo: src/lib/engine/alertas.ts → classificarZonaDesvio()
+
+### 6.1.4 Amortecimento entre Baricentros — Decisão 16
+
+  Para cada sprint:
+    d_i = dist_euclidiana(G_si, G_tm)
+    threshold_i = d_baseline × (E'_si / E_tm)
+
+  Sprint pequeno → threshold pequeno (menos tolerância)
+  Sprint grande → threshold maior (mais tolerância)
+
+  Se d_i > threshold → sprint divergindo do TM → alerta
+
+### 6.1.5 Análise Causal MATED
+
+  Decompõe o MATED nas tarefas que mais contribuem:
+
+  Fórmula:
+    peso_i = duração_tarefa_i / Σ(durações_tarefas_críticas)
+    contribuição_i = MATED × peso_i
+
+  Só tarefas do caminho crítico são incluídas.
+
+  Arquivo: src/lib/engine/causal-analysis.ts → decompMATEDCausal()
+
+## 6.2 Fever Chart — Gráfico de Febre — Decisão D29
+
+O Fever Chart monitora o consumo de buffer ao longo do tempo.
+
+### 6.2.1 As 5 Zonas (Decisão 24 incluiu o Azul)
+
+  AZUL:     buffer < 0%   (sobra de buffer = remissão)
+  VERDE:    0% ≤ buffer ≤ 33%
+  AMARELO:  33% < buffer ≤ 66%
+  VERMELHO: 66% < buffer ≤ 100%
+  PRETO:    buffer > 100% (buffer esgotado = game over)
+
+### 6.2.2 Cálculo do Consumo
+
+  Fórmula:
+    buffer_consumido_pct = (atraso_acumulado / buffer_tamanho) × 100
+
+  Arquivo: src/lib/engine/buffer.ts → determinarFeverZone()
+
+### 6.2.3 Monte Carlo Assimétrico
+
+  Projeção estocástica do consumo futuro de buffer:
+
+  Amostragem (Box-Muller com assimetria pessimista 1.5×):
+    u = √(-2 × ln(U₁)) × cos(2π × U₂)     (distribuição normal)
+    Assimetria: lado pessimista amplificado 1.5× (log-normal)
+
+  Saída: P50 (cenário mediano), P80 (cenário pessimista), IC 90%
+
+  Arquivo: src/lib/engine/fever-chart.ts → simularMonteCarlo()
+
+## 6.3 Castle of Cards — Castelo de Cartas — Decisão D31
+
+O Castle modela como o impacto de uma decisão PROPAGA pela malha
+Sierpinski de um sprint para seus vizinhos.
+
+### 6.3.1 Regras de Propagação
+
+  Sprint concluído → ZERO impacto (cristalizado, carta fixa)
+  Sprint ativo → recebe impacto TOTAL
+  Sprint futuro → impacto ATENUADO por distância
+
+### 6.3.2 Atenuação Exponencial — Decisão 28/29
+
+  Fórmula:
+    atenuação(k) = e^(-λ × k)
+
+  Onde:
+    λ = 0.3 (constante de decaimento, calibrada empiricamente)
+    k = distância na malha Sierpinski (número de "saltos" entre vizinhos)
+
+  Exemplo:
+    k=0 (sprint ativo): atenuação = 1.00 (100% do impacto)
+    k=1 (vizinho direto): atenuação = e^(-0.3) = 0.74 (74%)
+    k=2 (vizinho do vizinho): atenuação = e^(-0.6) = 0.55 (55%)
+    k=3 (3 saltos): atenuação = e^(-0.9) = 0.41 (41%)
+
+### 6.3.3 Ordem de Absorção — Decisão 29
+
+  1. TBZ adjacente absorve primeiro (é buffer, é pra isso que existe)
+  2. Se TBZ saturou → propaga para vizinhos ↑ com atenuação
+  3. Se vizinhos não absorvem → sobe na malha
+  4. Se chega ao topo → TM deforma → CEt verifica → COLAPSO possível
+
+### 6.3.4 Skew Visual (Inclinação da Carta)
+
+  Fórmula:
+    skew = -arctan(buffer_consumido / buffer_original) × 0.5
+
+  Negativo = inclinação para esquerda (carta tombando)
+  Quanto mais tombada, mais próximo do colapso.
+
+  Arquivo: src/lib/engine/castle.ts → calcularSkewVisual()
+
+### 6.3.5 Estados de Estabilidade
+
+  ESTÁVEL:   skew < 15° → carta firme
+  INCLINADO: 15° ≤ skew < 30° → carta oscilando
+  CRÍTICO:   30° ≤ skew < 45° → carta prestes a cair
+  COLAPSADO: skew ≥ 45° → carta caiu → propaga cascata
+
+## 6.4 Compressão Visual (Acordeão) — Decisão 30/31
+
+A malha Sierpinski comprime horizontalmente conforme o buffer é consumido:
+
+  Fórmula:
+    largura_base = E_tm × (1 - buffer_consumido_pct / 100)
+
+  Se buffer = 0% → largura = E_tm (100%, malha aberta)
+  Se buffer = 50% → largura = 50% (malha apertando)
+  Se buffer = 100% → largura → 0 (triângulo degenera, CEt viola)
+
+  Cada sprint comprime individualmente:
+    largura_sprint_i = E'_si × (1 - buffer_sprint_i_pct / 100)
+
+  Visualmente: sprint que consome mais buffer ENCOLHE mais que os vizinhos.
+  TBZ encolhe quando seus vizinhos o espremem.
+
+## 6.5 Zonas Operacionais (5 zonas de decisão)
+
+  VERDE:    P ≤ 1.0 E C ≤ 1.0 (dentro do planejado)
+  AMARELA:  P ou C acima de 1.0, dentro da contingência
+  VERMELHA: P ou C na borda da contingência (±1%)
+  CINZA:    P > prazo_total (além do contrato, tempo esgotado)
+  NULA:     C > 1.25 (orçamento esgotado, decisão BLOQUEADA)
+
+  Arquivo: src/lib/engine/zones.ts → classificarCandidatoCEt()
+
+## 6.6 Velocidade de Degradação
+
+  Regressão linear (OLS — Ordinary Least Squares / Mínimos Quadrados
+  Ordinários) sobre histórico de zonas:
+
+  Fórmula:
+    y = a×x + b
+
+  Se slope > 0.05 → deterioração (projeto piorando)
+  Se slope < -0.05 → melhoria (projeto melhorando)
+
+  Projeção: dias até zona amarela = (1.0 - b) / a
+
+  Arquivo: src/lib/engine/execution.ts → calcularVelocidadeDegradacao()
+
+## 6.7 Tradução do Ponto no Diagrama — Decisão 3
+
+  Quando o usuário clica/toca num ponto do fractal:
+
+  O sistema traduz para linguagem humana:
+    "Este ponto representa:
+     → 1.4 horas por hora de projeto em avanço/atraso
+     → R$ 400 de economia/gasto na execução do Sprint
+     → Se mantiver ritmo, Sprint fecha X dias antes/depois"
+
+  NÃO é manipulação (manche de avião).
+  É CONSULTA — informação pura sobre o que aquele ponto significa.
+
+  Arquivo: src/lib/engine/mapper.ts → toProjectValues()
+
+## 6.8 Klauss — Narração Contínua — Decisão 19 (narrativa)
+
+  O Klauss narra automaticamente cada fractal no dashboard:
+
+  Verde:  "Sprint 2 rodando dentro do esperado. Buffer intacto."
+  Amarelo: "Sprint 2 consumiu 40% do buffer. Tarefa X é gargalo.
+            Sugestão: realocar Dev Y."
+  Vermelho: "Sprint 2 vai estourar sexta. Se não agir, propaga
+             R$ 8k de impacto para Sprint 3."
+  Preto:  "Sprint 2 estourou. Cascata ativa. Castle propagando."
+  Azul:   "Sprint 2 devolveu 3 dias de buffer. Remissão ativa."
+
+  Decompõe MATED por sprint:
+    "Sprint 2 é o mais distante do TM (d=0.18). Design puxando custo.
+     Sprint 1 e 3 alinhados (d<0.05)."
+
+  Arquivo: src/app/api/ai/klauss/route.ts
+
+## 6.9 Sobras e Redistribuição — Decisão 5
+
+  Se um sprint termina com sobra (tempo ou dinheiro):
+
+  1. Motor calcula impacto da redistribuição ao sprint seguinte
+  2. Recalcula fractais afetados
+  3. Verifica colinearidade
+  4. Se TM melhora (área cresce) → sugere redistribuição
+  5. PM valida → sistema aplica
+
+  Se área do TM cresce acima de 100% → Estado AZUL (remissão)
+  Se volta a 100% → Verde (não é penalidade)
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 7 — FASE 6: ARQUIVAMENTO E APRENDIZADO
+# ════════════════════════════════════════════════════════════════════
+
+## 7.1 SDO (Score de Desfecho Objetivo) — Ponderado
+
+  Fórmula:
+    SDO = 0.40 × comp_area + 0.35 × comp_trajetoria + 0.25 × comp_benchmark
+
+  Componente Área (40%):
+    comp_area = (1 - |area_TA - area_TM| / area_TM) clamped [0, 1]
+
+  Componente Trajetória (35%):
+    Regressão OLS sobre histórico MATED ao longo do tempo.
+    comp_trajetoria = max(0, min(1, 0.5 - slope × 5))
+    Slope negativo (melhorando) → score alto
+    Slope positivo (piorando) → score baixo
+
+  Componente Benchmark (25%):
+    comp_benchmark = (1 - mated_projeto / mated_setor + 0.5) clamped [0, 1]
+    Compara performance do projeto contra média do setor.
+
+  Arquivo: src/lib/engine/sdo.ts → calcularSDO()
+
+## 7.2 SDO Ponderado por Sprint — Decisão 7/25
+
+  Cada sprint tem peso proporcional à complexidade:
+
+  Fórmula:
+    peso_sprint_i = (tarefas_criticas_i × complexidade_media_i) / Σ(todos)
+    SDO_ponderado = Σ(peso_i × area_sprint_i) / area_baseline
+
+  Se SDO_ponderado > 1.05 → classificação AZUL (superou baseline)
+  Se SDO_ponderado ∈ [0.95, 1.05] → classificação VERDE
+  Se SDO_ponderado < 0.95 → classificação por severidade
+
+  Cenários de peso:
+    Sprint difícil atrasa + sprint fácil redime:
+      peso_difícil alto, contribuição menor + peso_fácil baixo, contribuição alta
+      → Redenção real MAS com nota: "Sprint fácil compensou o difícil"
+
+    Sprint difícil adianta + sprint fácil atrasa:
+      → "Sprint difícil foi o herói. Performance acima do esperado."
+
+## 7.3 Bayesian — Aprendizado Contínuo
+
+### 7.3.1 Priors por Setor (Standish CHAOS)
+
+  SOFTWARE/TECH:   μ_C=1.56, σ_C=0.35, μ_P=1.35, σ_P=0.30
+  CONSTRUÇÃO:      μ_C=1.45, σ_C=0.25, μ_P=1.38, σ_P=0.20
+  CONSULTORIA:     μ_C=1.40, σ_C=0.25, μ_P=1.35, σ_P=0.25
+  GERAL:           μ_C=1.42, σ_C=0.40, μ_P=1.42, σ_P=0.40
+
+  Significado: "Em média, projetos de software custam 56% a mais
+  que o planejado e atrasam 35%."
+
+### 7.3.2 Atualização Bayesiana (Conjugado Normal)
+
+  Fórmula:
+    μ_posterior = (σ²_obs × μ_prior + σ²_prior × x_obs) / (σ²_prior + σ²_obs)
+    σ²_posterior = (σ²_prior × σ²_obs) / (σ²_prior + σ²_obs)
+
+  Onde:
+    μ_prior, σ²_prior = prior do setor (Standish)
+    x_obs = observação real do projeto
+    σ²_obs = variância observada
+
+  A cada projeto arquivado, o prior do setor é ATUALIZADO com dados reais.
+  Com o tempo, a predição sai do genérico (Standish) para o específico
+  (dados do tenant/time).
+
+  Arquivo: src/lib/engine/bayesian.ts → bayesianUpdate()
+
+### 7.3.3 Hierarquia de Predição (3 tiers)
+
+  Tier 1 (≥5 projetos históricos): usa dados próprios (95% confiança)
+  Tier 2 (1-4 projetos): atualiza prior do setor (30-80% confiança)
+  Tier 3 (0 projetos): prior puro do setor (20% confiança)
+
+  Arquivo: src/lib/engine/bayesian.ts → predictNext()
+
+## 7.4 Capital Intelectual
+
+  Ao arquivar, o sistema registra:
+    - SDO ponderado final
+    - Peso de cada sprint × contribuição
+    - Classificação final (azul/verde/amarelo/vermelho/preto)
+    - Narrativa Klauss resumida
+    - Dados para Bayesian (atualiza priors)
+
+  Klauss ganha memória:
+    "Projetos de 3 sprints neste tenant tendem a atrasar no Sprint 2"
+    "Times com >5 devs performam melhor no peso ponderado"
+
+  Isso fecha o ciclo: a experiência de cada projeto melhora
+  a predição dos próximos.
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 8 — ORDEM DE ACIONAMENTO (FLUXO COMPLETO)
+# ════════════════════════════════════════════════════════════════════
+
+  PASSO                              FUNÇÃO                          ARQUIVO
+  ─────────────────────────────────────────────────────────────────────────────
+  1. Colaborador envia estimativas    receberEstimativa()             api/estimativas
+  2. Sistema verifica completude      verificarCompletude()           api/estimativas
+  3. Forward Pass (ES, EF)            calculateCPMLocal()             cpm.ts
+  4. Backward Pass (LS, LF, folga)    calculateCPMLocal()             cpm.ts
+  5. Caminho(s) Crítico(s)            findAllCriticalPaths()          cpm.ts
+  6. Corte Goldratt 50%               cortarEstimativa()              ccpm.ts
+  7. Buffer do Projeto (RSS)          calcularProjectBuffer()         buffer.ts
+  8. Buffer de Custo (RSS)            calcularCostBuffer()            buffer.ts
+  9. Feeding Buffers                  calcularFeedingBuffers()        buffer.ts
+  10. Nivelamento de Recursos         nivelarRecursos()               ccpm.ts
+  11. Fórmula N (recursos extras)     calcularFormulaN()              contributor.ts
+  12. CEt Dupla (existência)          checkCETDupla()                 crisis.ts
+  13. Gerar TM (CDT baseline)         gerarTrianguloCDT()             math.ts
+  14. Normalização (E=1.0)            normalizeAnchor()               math.ts
+  15. Ângulos (Lei dos Cossenos)      calcularAngulos()               math.ts
+  16. Classificação Clairaut          sintetizarClairaut()            clairaut.ts
+  17. Área Heron (TM)                 areaTri()                       math.ts
+  18. Baricentro TM                   calculateBarycenter()           triangle-logic.ts
+  19. ZRE (Triângulo Órtico)          calculateOrthicTriangle()       triangle-logic.ts
+  20. Malha Sierpinski                sierpinskiLayout()              fractals.ts (novo)
+  21. Normalização fractal (regra 3)  buildSprintTriangle()           fractals.ts
+  22. CEt por fractal                 checkCDTExistence()             crisis.ts
+  23. Colinearidade                   verificarColinearidade()        fractals.ts (novo)
+  24. Clairaut por fractal (D23)      aplicarClairautFractais()       clairaut-fractals.ts
+  25. NVO ponderado                   calcularNVOPonderado()          (novo)
+  26. Pipeline Dual TM/TA             executarPipelineDual()          pipeline-dual.ts
+  27. MATED composto                  calcularMATEDComposto()         (novo)
+  28. Fever Chart (zona + Monte Carlo) buildFeverPoint() + MC         fever-chart.ts
+  29. Castle (propagação)             propagarImpacto()               castle.ts
+  30. Zonas Operacionais              classificarCandidatoCEt()       zones.ts
+  31. Alertas (zona mudou?)           verificarAlertas()              alertas.ts
+  32. Klauss (narração automática)    /api/ai/klauss                  route.ts
+  33. Degradação (OLS)                calcularVelocidadeDegradacao()  execution.ts
+  ─── Ao arquivar ──────────────────────────────────────────────────────────────
+  34. SDO ponderado                   calcularSDO()                   sdo.ts
+  35. Bayesian update                 bayesianUpdate()                bayesian.ts
+  36. Capital intelectual             (arquivamento)                  sdo.ts + bayesian.ts
+
+  Passos 1-2: executados UMA VEZ (coleta)
+  Passos 3-25: executados UMA VEZ (construção do projeto)
+  Passos 26-33: executados A CADA MEDIÇÃO (monitoramento contínuo)
+  Passos 34-36: executados UMA VEZ (ao arquivar)
+
+
+# ════════════════════════════════════════════════════════════════════
+# PARTE 9 — FERRAMENTAS AUXILIARES
+# ════════════════════════════════════════════════════════════════════
+
+## 9.1 Extrator Determinístico de TAP
+
+  Extrai orçamento, prazo e nome do projeto a partir de texto PDF.
+  SEM LLM — puramente regex e heurística.
+
+  Prioridade de busca:
+    1. Keywords: "custo estimado", "orçamento base/total"
+    2. Padrões monetários: R$, US$, USD
+    3. Padrões temporais: dias, meses, anos, marcos
+    4. Exclui: teto, contingência, reserva
+
+  Arquivo: src/lib/engine/extractors.ts → deterministicExtractor()
+
+## 9.2 Mapper (Tradutor de Coordenadas)
+
+  Converte entre coordenadas SVG (visual) e valores de projeto (dias, R$):
+
+  toProjectValues(ponto_svg) → { dias, custo_brl }
+  toCoordinate(dias, custo) → { x_svg, y_svg }
+
+  Arquivo: src/lib/engine/mapper.ts
+
+## 9.3 Sugiyama Layout (Diagrama PERT)
+
+  Algoritmo de layout para grafos DAG (Directed Acyclic Graph):
+
+  3 passos:
+    1. Longest-path layering (atribuir camadas)
+    2. Barycenter ordering (ordenar dentro da camada)
+    3. Position calculation (calcular x, y)
+
+  Arquivo: src/lib/engine/sugiyama.ts → computeSugiyamaLayout()
+
+## 9.4 Ferramentas de Pesquisa Operacional
+
+  EOQ (Economic Order Quantity — Lote Econômico de Compra):
+    Q = √((2×D×S) / H)
+
+  Fila M/M/1 (detecção de gargalo):
+    utilização ρ = λ/μ
+    comprimento Lq = ρ²/(1-ρ)
+
+  EMV (Expected Monetary Value — Valor Monetário Esperado):
+    EMV = Σ(probabilidade_i × impacto_i)
+
+  Arquivo: src/lib/engine/math-tools.ts
+
+## 9.5 Ancoragem e Guia
+
+  Determina qual reta é GUIA (imóvel) e qual é refletida/transladada
+  conforme o protocolo Clairaut:
+
+  Agudo: ambas naturais, sem guia
+  Beta: Custo = GUIA, prazo invertido (m → -m)
+  Gamma: Prazo = GUIA, custo transladado
+
+  Arquivo: src/lib/engine/ancoragem-guia.ts → calcularAncoragem()
+
+## 9.6 Tradução CDT
+
+  Converte diagnóstico geométrico em narrativa humana:
+
+  OTIMO → "Excelência executiva"
+  SEGURO → "Execução controlada"
+  RISCO → "Atenção — triângulo se aproxima da crise"
+  CRISE → "Deformação plástica detectada"
+
+  Arquivo: src/lib/engine/traducao.ts → traduzirCDT()
+
+## 9.7 Calendário — Decisão 17/18
+
+  Motor interno: sempre HORAS
+  Exibição: configurável por projeto (dias ou horas)
+
+  Conversão:
+    duracao_horas = 48
+    Projeto em "dias" com regime 8h → exibe "6 dias"
+    Projeto em "horas" → exibe "48h"
+
+  Defaults por perfil:
+    TECH: 2 semanas/sprint, 8h/dia, sem sábado
+    CONSTRUÇÃO: 30 dias/sprint, 10h/dia, com sábado
+
+
+# ════════════════════════════════════════════════════════════════════
+# GLOSSÁRIO
+# ════════════════════════════════════════════════════════════════════
+
+  α (alpha)      Ângulo entre Escopo e Custo, oposto ao Prazo
+  ω (omega)      Ângulo entre Escopo e Prazo, oposto ao Custo
+  ε (epsilon)    Ângulo entre Prazo e Custo, oposto ao Escopo
+  λ (lambda)     Constante de decaimento exponencial (0.3 no Castle)
+
+  C              Custo (lado azul do triângulo)
+  CB             Cost Buffer — Buffer de Custo
+  CCPM           Critical Chain Project Management — Gestão por Cadeia Crítica
+  CDT            Custo-Duração-Triângulo (representação geométrica)
+  CEt            Condição de Existência do Triângulo (desigualdade triangular)
+  CPM            Critical Path Method — Método do Caminho Crítico
+
+  D1-D34         Decisões numeradas do framework TRIQ
+  DAG            Directed Acyclic Graph — Grafo Acíclico Dirigido
+
+  E              Escopo (base verde do triângulo)
+  EAP            Estrutura Analítica do Projeto (= WBS)
+  EF             Early Finish — Fim Mais Cedo
+  EMV            Expected Monetary Value — Valor Monetário Esperado
+  EOQ            Economic Order Quantity — Lote Econômico de Compra
+  ES             Early Start — Início Mais Cedo
+  EVM            Earned Value Management — Gestão de Valor Agregado
+
+  FB             Feeding Buffer — Buffer de Alimentação
+
+  IC             Intervalo de Confiança (Monte Carlo)
+  IR             Intrinsic Risk — Risco Intrínseco (1 - ε/90)
+  IQ             Índice de Qualidade (área_TA / área_TM × 100%)
+
+  JWT            JSON Web Token — Token de autenticação
+
+  LF             Late Finish — Fim Mais Tarde
+  LS             Late Start — Início Mais Tarde
+
+  MATED          Morphological-Analytical Triangle Equilibrium Diagnostics
+                 Diagnóstico de Equilíbrio Triangular Morfológico-Analítico
+  MVP            Minimum Viable Product — Produto Mínimo Viável
+
+  NVO            Núcleo de Viabilidade Operacional (baricentro ponderado)
+
+  OLS            Ordinary Least Squares — Mínimos Quadrados Ordinários
+
+  P              Prazo (lado amarelo do triângulo)
+  P50            Percentil 50 (cenário mediano no Monte Carlo)
+  P80            Percentil 80 (cenário pessimista no Monte Carlo)
+  PB             Project Buffer — Buffer do Projeto
+  PM             Project Manager — Gerente de Projeto
+  PO             Product Owner — Dono do Produto
+
+  Rα             Risco direcional de orçamento = max(0, (α-45)/45)
+  Rω             Risco direcional de cronograma = max(0, (ω-45)/45)
+  RLS            Row Level Security — Segurança em Nível de Linha (Supabase)
+  RSS            Root Sum of Squares — Raiz da Soma dos Quadrados
+
+  SDO            Score de Desfecho Objetivo (0-1, qualidade final do projeto)
+
+  TA             Triângulo Atual (estado real, recalculado continuamente)
+  TBZ            Transition Buffer Zone — Zona de Buffer de Transição
+  TM             Triângulo Mestre (baseline imutável, dia zero)
+  TOC            Theory of Constraints — Teoria das Restrições
+
+  WBS            Work Breakdown Structure — Estrutura de Decomposição do Trabalho
+
+  ZRE            Zona de Resiliência Executiva (triângulo órtico)
+
+
+# ════════════════════════════════════════════════════════════════════
+# FIM DO DOCUMENTO
+# ════════════════════════════════════════════════════════════════════
+# Gerado em: 2026-04-04
+# Squad: triq-engineering
+# Validado por: Yuri (presidente), Fermat (math), Klauss (AI),
+#               Roberta (estatística), Kenji (produção), SM, QA
+# Próximo passo: SM organiza em épicos/stories, QA valida coerência
+# ════════════════════════════════════════════════════════════════════

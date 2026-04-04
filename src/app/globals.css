@@ -1,0 +1,601 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Aura — Design System Variables
+   @visual-designer (Pixel) + @ux-design-expert (Uma)
+
+   BENCHMARKING — Premium Dark Dashboards
+   ───────────────────────────────────────
+   Linear      → #08090a base, white-alpha borders, subdued surfaces
+   Vercel/Geist→ #000 hero, --ds-background-100/200 layering, white-alpha borders
+   Raycast     → Near-black with blue-tinted panels, heavy blur layers, glow halos
+   shadcn/ui   → #09090b canonical dark, oklch-based neutral zinc scale
+   Stripe      → High-contrast text on dark, precise border-radius, clean card depth
+
+   DECISION LOG
+   ────────────
+   BG: #09090b — shadcn canonical. Linear uses #08090a (1 step darker).
+       Both avoid blue-tint of slate-950 (#020617), keeping it truly neutral.
+
+   Surface (card): #111113 — 1 luminance step above BG. Vercel ds-background-200
+       equivalent. Neutral zinc, not slate (avoids cool undertone).
+
+   Surface raised: #18181b — zinc-900. For modals, sidebars, overlaid panels.
+       Raycast uses ~#121922 (slightly blue), we stay neutral zinc.
+
+   Surface overlay: #27272a — zinc-800. Highest elevation: dropdowns, tooltips.
+
+   Borders: rgba(255,255,255,0.06) — white-alpha system.
+       Vercel pattern. Avoids harsh hardcoded borders on black.
+       Creates luminous, natural separation. Scales with elevation.
+
+   Text primary: #fafafa — zinc-50. Softer than #ffffff, reduces eye strain.
+   Text secondary: #a1a1aa — zinc-400. Passes WCAG AA on #111113.
+   Text muted: #52525b — zinc-600. Placeholders, disabled states.
+
+   Accent: #3b82f6 — blue-500. Unchanged — passes WCAG AA, consistent brand.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Light theme (base) ── */
+:root {
+  /* Surfaces */
+  --background:        #f4f4f5;
+  --foreground:        #09090b;
+  --surface:           #ffffff;
+  --surface-raised:    #f4f4f5;
+  --surface-overlay:   #e4e4e7;
+  --surface-subtle:    rgba(244, 244, 245, 0.6);
+
+  /* Borders */
+  --border:            #e4e4e7;
+  --border-subtle:     #f4f4f5;
+  --border-focus:      #3b82f6;
+
+  /* Typography */
+  --text-primary:      #09090b;
+  --text-secondary:    #52525b;
+  --text-muted:        #a1a1aa;
+
+  /* Accents */
+  --accent:            #3b82f6;
+  --accent-indigo:     #6366f1;
+
+  /* Elevation shadows */
+  --shadow-card:       0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08);
+  --shadow-modal:      0 20px 60px rgba(0,0,0,0.15);
+  --shadow-dropdown:   0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* ── Dark theme — Premium Black ── */
+.dark {
+  /* Layer 0 — True background: neutral near-black */
+  --background:        #09090b;
+
+  /* Layer 1 — Card / primary surface */
+  --surface:           #111113;
+
+  /* Layer 2 — Raised surface: modals, sidebars */
+  --surface-raised:    #18181b;
+
+  /* Layer 3 — Overlay: dropdowns, tooltips */
+  --surface-overlay:   #27272a;
+
+  /* Tinted hover highlight */
+  --surface-subtle:    rgba(39, 39, 42, 0.5);
+
+  /* Borders — white-alpha system */
+  --border:            rgba(255, 255, 255, 0.06);
+  --border-subtle:     rgba(255, 255, 255, 0.04);
+  --border-focus:      #3b82f6;
+
+  /* Typography — zinc neutral scale */
+  --text-primary:      #fafafa;
+  --text-secondary:    #a1a1aa;
+  --text-muted:        #52525b;
+
+  /* Accents */
+  --accent:            #3b82f6;
+  --accent-indigo:     #6366f1;
+
+  /* Elevation shadows */
+  --shadow-card:       0 1px 3px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.30);
+  --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.60), 0 2px 6px rgba(0,0,0,0.40);
+  --shadow-modal:      0 24px 64px rgba(0,0,0,0.70), 0 8px 24px rgba(0,0,0,0.50);
+  --shadow-dropdown:   0 8px 24px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.30);
+}
+
+/* ── Smooth theme transition ── */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease !important;
+}
+
+/* ── Body ── */
+body {
+  color: var(--text-primary);
+  background: var(--background);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══ Scrollbar — Minimal premium (white-alpha, 5px) ═══ */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ═══ Text selection ═══ */
+::selection {
+  background: rgba(99, 102, 241, 0.28);
+  color: #fafafa;
+}
+
+/* ═══ Focus Ring — WCAG 2.1 AA (2.4.7 Focus Visible) ═══ */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* ── Aura Zone Utilities ── */
+  .zona-otimo  { @apply bg-zona-otimo-bg  border border-zona-otimo-border  text-zona-otimo-text; }
+  .zona-seguro { @apply bg-zona-seguro-bg border border-zona-seguro-border text-zona-seguro-text; }
+  .zona-risco  { @apply bg-zona-risco-bg  border border-zona-risco-border  text-zona-risco-text; }
+  .zona-crise  { @apply bg-zona-crise-bg  border border-zona-crise-border  text-zona-crise-text; }
+
+  /* ── Glass — frosted dark panel
+     Layered: dark base + white-alpha border + backdrop blur + saturation boost
+     Benchmark: Raycast floating panels, Linear command palette
+     Use for: Sidebar, popovers, floating drawers ── */
+  .glass {
+    background: rgba(17, 17, 19, 0.80);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Glass subtle — lighter variant (tooltips, small popovers) ── */
+  .glass-subtle {
+    background: rgba(24, 24, 27, 0.72);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* ── Gradient text — Aura primary (blue → emerald) ── */
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+  }
+
+  /* ── Gradient text — Klauss/AI (indigo → blue) ── */
+  .text-gradient-indigo {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(135deg, #818cf8 0%, #60a5fa 100%);
+  }
+
+  /* ── Gradient border — Linear pattern
+     Renders a 1px gradient border without clipping children.
+     Requires: position:relative on element ── */
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.30),
+      rgba(59, 130, 246, 0.15),
+      rgba(255, 255, 255, 0.04)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* ── Zone glow halos ── */
+  .glow-blue    { box-shadow: 0 0 40px rgba(59, 130, 246, 0.10), 0 0 80px rgba(59, 130, 246, 0.05); }
+  .glow-indigo  { box-shadow: 0 0 40px rgba(99, 102, 241, 0.10), 0 0 80px rgba(99, 102, 241, 0.05); }
+  .glow-emerald { box-shadow: 0 0 40px rgba(16, 185, 129, 0.10), 0 0 80px rgba(16, 185, 129, 0.05); }
+  .glow-amber   { box-shadow: 0 0 40px rgba(245, 158, 11,  0.10), 0 0 80px rgba(245, 158, 11,  0.05); }
+  .glow-rose    { box-shadow: 0 0 40px rgba(244, 63,  94,  0.10), 0 0 80px rgba(244, 63,  94,  0.05); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── triq-card — Primary card surface
+     Surface L1 + white-alpha border + CSS-var shadow
+     Replaces inline: bg-slate-900 border border-slate-800 rounded-2xl ── */
+  .triq-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 200ms ease, border-color 200ms ease;
+  }
+  .triq-card:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: rgba(255, 255, 255, 0.09);
+  }
+
+  /* ── triq-card-raised — Elevated (modals, drawers) ── */
+  .triq-card-raised {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-modal);
+  }
+
+  /* ── triq-metric — KPI number (monospaced, tight tracking) ── */
+  .triq-metric {
+    font-size: 2.5rem;
+    line-height: 2.75rem;
+    font-weight: 700;
+    font-family: var(--font-geist-mono), 'Courier New', monospace;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  /* ── triq-badge ── */
+  .triq-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── triq-section-label — Sidebar/dashboard section headers ── */
+  .triq-section-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── triq-btn — Base ── */
+  .triq-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 150ms ease;
+    cursor: pointer;
+    outline: none;
+    white-space: nowrap;
+  }
+  .triq-btn:focus-visible {
+    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
+  }
+
+  /* ── triq-btn-primary — Blue CTA ── */
+  .triq-btn-primary {
+    background: #3b82f6;
+    color: #ffffff;
+    border: 1px solid rgba(59, 130, 246, 0.5);
+  }
+  .triq-btn-primary:hover {
+    background: #2563eb;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  }
+
+  /* ── triq-btn-secondary — Muted surface ── */
+  .triq-btn-secondary {
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+  }
+  .triq-btn-secondary:hover {
+    background: var(--surface-overlay);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.09);
+  }
+
+  /* ── triq-btn-ghost — Transparent, hover only ── */
+  .triq-btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid transparent;
+  }
+  .triq-btn-ghost:hover {
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    border-color: var(--border);
+  }
+
+  /* ── triq-btn sizes — RFN-1 AC5 ── */
+  .triq-btn-sm {
+    height: 1.75rem;   /* h-7 */
+    padding-inline: 0.75rem;
+    font-size: 0.75rem;
+  }
+  .triq-btn-md {
+    height: 2.25rem;   /* h-9 */
+    padding-inline: 1rem;
+    font-size: 0.875rem;
+  }
+  .triq-btn-lg {
+    height: 2.75rem;   /* h-11 */
+    padding-inline: 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* ── triq-input ── */
+  .triq-input {
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    width: 100%;
+    outline: none;
+  }
+  .triq-input::placeholder {
+    color: var(--text-muted);
+  }
+  .triq-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  }
+
+  /* ── Input range ── */
+  input[type="range"] {
+    height: 0.375rem;
+    border-radius: 9999px;
+    appearance: none;
+    background: var(--surface-overlay);
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 9999px;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+  }
+
+  /* ── triq-divider ── */
+  .triq-divider {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 0;
+  }
+
+  /* ── triq-skeleton — Loading shimmer ── */
+  .triq-skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface) 25%,
+      var(--surface-raised) 50%,
+      var(--surface) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: 0.375rem;
+  }
+}
+
+/* ═══ Keyframes ═══ */
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RFN-10 — Transições Fluidas + Visual Moderno
+   @ux-design-expert (Uma) + @dev (Dex)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page transition: fade-in + slide-up (200ms) ── */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: page-enter 200ms ease forwards;
+}
+
+@layer components {
+  /* ── triq-card-glass — Glassmorphism card (RFN-10 AC1) ── */
+  .triq-card-glass {
+    background: rgba(15, 15, 20, 0.80);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(255,255,255,0.03);
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+  .triq-card-glass:hover {
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  /* ── triq-selected — Ring for active/selected state (RFN-10 AC3) ── */
+  .triq-selected {
+    box-shadow:
+      0 0 0 2px rgba(59, 130, 246, 0.60),
+      0 0 0 4px rgba(2, 6, 23, 1),
+      0 0 20px rgba(59, 130, 246, 0.20);
+  }
+
+  /* ── triq-btn-primary upgrade — gradient + glow (RFN-10 AC5) ── */
+  .triq-btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    color: #ffffff;
+    border: 1px solid rgba(59, 130, 246, 0.40);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.30);
+  }
+  .triq-btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.50);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Aura-UX: Typography & Readability Global Overrides
+   @ux-design-expert (Uma) + @dr-kenki + squad
+   Problema: text-[10px]/text-[11px] espalhados → difícil leitura
+   Solução: escala mínima garantida + recharts override global
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Recharts global: aumentar fonte dos eixos e legendas ── */
+.recharts-text,
+.recharts-cartesian-axis-tick-value {
+  font-size: 12px !important;
+  fill: #a1a1aa;
+}
+.recharts-legend-item-text {
+  font-size: 12px !important;
+  color: #a1a1aa !important;
+}
+/* Tooltip readability */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: #18181b !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+  padding: 10px 14px !important;
+}
+.recharts-tooltip-label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #fafafa !important;
+  margin-bottom: 6px !important;
+}
+.recharts-tooltip-item {
+  font-size: 12px !important;
+  color: #a1a1aa !important;
+  padding: 2px 0 !important;
+}
+.recharts-tooltip-item-value {
+  font-weight: 600;
+  color: #fafafa !important;
+}
+/* Legend: posicionar fora da área do gráfico para não cobrir dados */
+.recharts-legend-wrapper {
+  padding-top: 4px !important;
+}
+
+/* ── Mínimos de legibilidade — evitar text abaixo de 11px ── */
+.triq-label {
+  font-size: 0.75rem;  /* 12px */
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+}
+.triq-label-xs {
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ── Tabelas de dados: densidade legível ── */
+.triq-table th {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.625rem 0.75rem;
+  white-space: nowrap;
+}
+.triq-table td {
+  font-size: 0.8125rem; /* 13px */
+  padding: 0.625rem 0.75rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.triq-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* ── Collapsible sections ── */
+.triq-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.625rem 1rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 0.5rem;
+  transition: color 150ms ease, background 150ms ease;
+  border: none;
+  background: transparent;
+}
+.triq-section-toggle:hover {
+  color: var(--text-secondary);
+  background: var(--surface-subtle);
+}

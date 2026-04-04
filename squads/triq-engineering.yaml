@@ -1,0 +1,33 @@
+name: "triq-engineering"
+version: 1.0.0
+description: "Squad focado na excelência matemática e governança do TRIQ-6.1."
+author: "TRIQ Master"
+
+aiox:
+  minVersion: "2.1.0"
+  type: squad
+
+components:
+  agents:
+    - triq-pm:
+        role: "Lead Orchestrator"
+        primary: true
+    - triq-math:
+        role: "Mathematical Specialist"
+    - dev:
+        role: "Builder"
+    - qa:
+        role: "Validator/Gatekeeper"
+
+workflows:
+  - name: "complex-problem-solving"
+    steps:
+      1: "@triq-pm analisa o requisito e quebra em componentes matemáticos."
+      2: "@triq-pm gera handoff para @triq-math."
+      3: "@triq-math desenvolve a lógica e valida via testes unitários."
+      4: "@triq-math gera handoff para @dev implementar na UI."
+      5: "@qa executa gate final."
+
+governance:
+  handoff_required: true
+  max_handoff_tokens: 500
