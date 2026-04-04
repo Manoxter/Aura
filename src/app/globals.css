@@ -69,19 +69,19 @@
   --shadow-dropdown:   0 8px 24px rgba(0,0,0,0.12);
 }
 
-/* ── Dark theme — Premium Black ── */
+/* ── Dark theme — Tech-Noir Obsidiana ── */
 .dark {
-  /* Layer 0 — True background: neutral near-black */
-  --background:        #09090b;
+  /* Layer 0 — Preto Obsidiana (NUNCA #000 puro) */
+  --background:        #05080A;
 
-  /* Layer 1 — Card / primary surface */
-  --surface:           #111113;
+  /* Layer 1 — Card surface: obsidiana + 1 step */
+  --surface:           #0A0E12;
 
-  /* Layer 2 — Raised surface: modals, sidebars */
-  --surface-raised:    #18181b;
+  /* Layer 2 — Raised: sidebars, modals */
+  --surface-raised:    #0F1318;
 
   /* Layer 3 — Overlay: dropdowns, tooltips */
-  --surface-overlay:   #27272a;
+  --surface-overlay:   #161B22;
 
   /* Tinted hover highlight */
   --surface-subtle:    rgba(39, 39, 42, 0.5);
@@ -99,6 +99,20 @@
   /* Accents */
   --accent:            #3b82f6;
   --accent-indigo:     #6366f1;
+
+  /* ── Fever Chart Flow (Cromática da marca) ── */
+  --fever-azul:        #22d3ee;   /* Cyan — remissão */
+  --fever-verde:       #00E676;   /* Verde Elétrico — saudável */
+  --fever-amarelo:     #FFAB00;   /* Âmbar Quente — atenção */
+  --fever-vermelho:    #E53935;   /* Vermelho Cádmio — crise */
+  --fever-preto:       #1a1a2e;   /* Escuridão — colapso */
+
+  /* ── Zona backgrounds (glassmorphism) ── */
+  --zona-azul-bg:      rgba(34, 211, 238, 0.08);
+  --zona-verde-bg:     rgba(0, 230, 118, 0.08);
+  --zona-amarelo-bg:   rgba(255, 171, 0, 0.08);
+  --zona-vermelho-bg:  rgba(229, 57, 53, 0.10);
+  --zona-preto-bg:     rgba(26, 26, 46, 0.20);
 
   /* Elevation shadows */
   --shadow-card:       0 1px 3px rgba(0,0,0,0.40), 0 1px 2px rgba(0,0,0,0.30);
@@ -123,7 +137,7 @@ html.theme-transition *::after {
 body {
   color: var(--text-primary);
   background: var(--background);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-outfit), var(--font-geist-sans), 'Outfit', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -193,12 +207,12 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  /* ── Gradient text — Aura primary (blue → emerald) ── */
+  /* ── Gradient text — Fever Chart Flow (verde → âmbar → vermelho) ── */
   .text-gradient {
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    background-image: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+    background-image: linear-gradient(135deg, var(--fever-verde) 0%, var(--fever-amarelo) 50%, var(--fever-vermelho) 100%);
   }
 
   /* ── Gradient text — Klauss/AI (indigo → blue) ── */
@@ -248,41 +262,41 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 @layer components {
 
-  /* ── triq-card — Primary card surface
+  /* ── aura-card — Primary card surface
      Surface L1 + white-alpha border + CSS-var shadow
      Replaces inline: bg-slate-900 border border-slate-800 rounded-2xl ── */
-  .triq-card {
+  .aura-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 0.75rem;
     box-shadow: var(--shadow-card);
     transition: box-shadow 200ms ease, border-color 200ms ease;
   }
-  .triq-card:hover {
+  .aura-card:hover {
     box-shadow: var(--shadow-card-hover);
     border-color: rgba(255, 255, 255, 0.09);
   }
 
-  /* ── triq-card-raised — Elevated (modals, drawers) ── */
-  .triq-card-raised {
+  /* ── aura-card-raised — Elevated (modals, drawers) ── */
+  .aura-card-raised {
     background: var(--surface-raised);
     border: 1px solid var(--border);
     border-radius: 0.75rem;
     box-shadow: var(--shadow-modal);
   }
 
-  /* ── triq-metric — KPI number (monospaced, tight tracking) ── */
-  .triq-metric {
+  /* ── aura-metric — KPI number (monospaced, tight tracking) ── */
+  .aura-metric {
     font-size: 2.5rem;
     line-height: 2.75rem;
     font-weight: 700;
-    font-family: var(--font-geist-mono), 'Courier New', monospace;
+    font-family: var(--font-jetbrains), var(--font-geist-mono), 'JetBrains Mono', monospace;
     letter-spacing: -0.02em;
     color: var(--text-primary);
   }
 
-  /* ── triq-badge ── */
-  .triq-badge {
+  /* ── aura-badge ── */
+  .aura-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
@@ -294,8 +308,8 @@ body {
     letter-spacing: 0.01em;
   }
 
-  /* ── triq-section-label — Sidebar/dashboard section headers ── */
-  .triq-section-label {
+  /* ── aura-section-label — Sidebar/dashboard section headers ── */
+  .aura-section-label {
     font-size: 0.6875rem;
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -303,8 +317,8 @@ body {
     color: var(--text-muted);
   }
 
-  /* ── triq-btn — Base ── */
-  .triq-btn {
+  /* ── aura-btn — Base ── */
+  .aura-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -318,64 +332,64 @@ body {
     outline: none;
     white-space: nowrap;
   }
-  .triq-btn:focus-visible {
+  .aura-btn:focus-visible {
     box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--accent);
   }
 
-  /* ── triq-btn-primary — Blue CTA ── */
-  .triq-btn-primary {
+  /* ── aura-btn-primary — Blue CTA ── */
+  .aura-btn-primary {
     background: #3b82f6;
     color: #ffffff;
     border: 1px solid rgba(59, 130, 246, 0.5);
   }
-  .triq-btn-primary:hover {
+  .aura-btn-primary:hover {
     background: #2563eb;
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
   }
 
-  /* ── triq-btn-secondary — Muted surface ── */
-  .triq-btn-secondary {
+  /* ── aura-btn-secondary — Muted surface ── */
+  .aura-btn-secondary {
     background: var(--surface-raised);
     color: var(--text-secondary);
     border: 1px solid var(--border);
   }
-  .triq-btn-secondary:hover {
+  .aura-btn-secondary:hover {
     background: var(--surface-overlay);
     color: var(--text-primary);
     border-color: rgba(255, 255, 255, 0.09);
   }
 
-  /* ── triq-btn-ghost — Transparent, hover only ── */
-  .triq-btn-ghost {
+  /* ── aura-btn-ghost — Transparent, hover only ── */
+  .aura-btn-ghost {
     background: transparent;
     color: var(--text-secondary);
     border: 1px solid transparent;
   }
-  .triq-btn-ghost:hover {
+  .aura-btn-ghost:hover {
     background: var(--surface-raised);
     color: var(--text-primary);
     border-color: var(--border);
   }
 
-  /* ── triq-btn sizes — RFN-1 AC5 ── */
-  .triq-btn-sm {
+  /* ── aura-btn sizes — RFN-1 AC5 ── */
+  .aura-btn-sm {
     height: 1.75rem;   /* h-7 */
     padding-inline: 0.75rem;
     font-size: 0.75rem;
   }
-  .triq-btn-md {
+  .aura-btn-md {
     height: 2.25rem;   /* h-9 */
     padding-inline: 1rem;
     font-size: 0.875rem;
   }
-  .triq-btn-lg {
+  .aura-btn-lg {
     height: 2.75rem;   /* h-11 */
     padding-inline: 1.5rem;
     font-size: 1rem;
   }
 
-  /* ── triq-input ── */
-  .triq-input {
+  /* ── aura-input ── */
+  .aura-input {
     background: var(--surface-raised);
     border: 1px solid var(--border);
     border-radius: 0.5rem;
@@ -386,10 +400,10 @@ body {
     width: 100%;
     outline: none;
   }
-  .triq-input::placeholder {
+  .aura-input::placeholder {
     color: var(--text-muted);
   }
-  .triq-input:focus {
+  .aura-input:focus {
     border-color: var(--border-focus);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
   }
@@ -412,15 +426,15 @@ body {
     cursor: pointer;
   }
 
-  /* ── triq-divider ── */
-  .triq-divider {
+  /* ── aura-divider ── */
+  .aura-divider {
     border: none;
     border-top: 1px solid var(--border-subtle);
     margin: 0;
   }
 
-  /* ── triq-skeleton — Loading shimmer ── */
-  .triq-skeleton {
+  /* ── aura-skeleton — Loading shimmer ── */
+  .aura-skeleton {
     background: linear-gradient(
       90deg,
       var(--surface) 25%,
@@ -461,8 +475,8 @@ body {
 }
 
 @layer components {
-  /* ── triq-card-glass — Glassmorphism card (RFN-10 AC1) ── */
-  .triq-card-glass {
+  /* ── aura-card-glass — Glassmorphism card (RFN-10 AC1) ── */
+  .aura-card-glass {
     background: rgba(15, 15, 20, 0.80);
     backdrop-filter: blur(12px) saturate(160%);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
@@ -471,27 +485,27 @@ body {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(255,255,255,0.03);
     transition: border-color 200ms ease, box-shadow 200ms ease;
   }
-  .triq-card-glass:hover {
+  .aura-card-glass:hover {
     border-color: rgba(255, 255, 255, 0.10);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.05);
   }
 
-  /* ── triq-selected — Ring for active/selected state (RFN-10 AC3) ── */
-  .triq-selected {
+  /* ── aura-selected — Ring for active/selected state (RFN-10 AC3) ── */
+  .aura-selected {
     box-shadow:
       0 0 0 2px rgba(59, 130, 246, 0.60),
       0 0 0 4px rgba(2, 6, 23, 1),
       0 0 20px rgba(59, 130, 246, 0.20);
   }
 
-  /* ── triq-btn-primary upgrade — gradient + glow (RFN-10 AC5) ── */
-  .triq-btn-primary {
+  /* ── aura-btn-primary upgrade — gradient + glow (RFN-10 AC5) ── */
+  .aura-btn-primary {
     background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
     color: #ffffff;
     border: 1px solid rgba(59, 130, 246, 0.40);
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.30);
   }
-  .triq-btn-primary:hover {
+  .aura-btn-primary:hover {
     background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
     box-shadow: 0 4px 16px rgba(59, 130, 246, 0.50);
   }
@@ -543,13 +557,13 @@ body {
 }
 
 /* ── Mínimos de legibilidade — evitar text abaixo de 11px ── */
-.triq-label {
+.aura-label {
   font-size: 0.75rem;  /* 12px */
   font-weight: 500;
   letter-spacing: 0.01em;
   color: var(--text-secondary);
 }
-.triq-label-xs {
+.aura-label-xs {
   font-size: 0.6875rem; /* 11px */
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -558,7 +572,7 @@ body {
 }
 
 /* ── Tabelas de dados: densidade legível ── */
-.triq-table th {
+.aura-table th {
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.07em;
@@ -567,18 +581,18 @@ body {
   padding: 0.625rem 0.75rem;
   white-space: nowrap;
 }
-.triq-table td {
+.aura-table td {
   font-size: 0.8125rem; /* 13px */
   padding: 0.625rem 0.75rem;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border-subtle);
 }
-.triq-table tr:last-child td {
+.aura-table tr:last-child td {
   border-bottom: none;
 }
 
 /* ── Collapsible sections ── */
-.triq-section-toggle {
+.aura-section-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -595,7 +609,7 @@ body {
   border: none;
   background: transparent;
 }
-.triq-section-toggle:hover {
+.aura-section-toggle:hover {
   color: var(--text-secondary);
   background: var(--surface-subtle);
 }
