@@ -11,10 +11,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // ── GET: buscar tarefas do convite pelo token ────────────────────────────────
 
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   // 1. Validar token
-  const { data: convite, error: cErr } = await supabase
+  const { data: convite, error: cErr } = await getSupabase()
     .from('convites_projeto')
     .select('id, projeto_id, email, nome, papel, respondido')
     .eq('token', token)
@@ -40,21 +42,21 @@ export async function GET(req: NextRequest) {
   }
 
   // 2. Buscar tarefas do projeto
-  const { data: tarefas } = await supabase
+  const { data: tarefas } = await getSupabase()
     .from('tarefas')
     .select('id, nome, id_string, ordem')
     .eq('projeto_id', convite.projeto_id)
     .order('ordem')
 
   // 3. Buscar sprints do projeto
-  const { data: sprints } = await supabase
+  const { data: sprints } = await getSupabase()
     .from('sprints_fractais')
     .select('id, nome, ordem, data_inicio, data_fim')
     .eq('projeto_id', convite.projeto_id)
     .order('ordem')
 
   // 4. Buscar projeto (nome)
-  const { data: projeto } = await supabase
+  const { data: projeto } = await getSupabase()
     .from('projetos')
     .select('nome')
     .eq('id', convite.projeto_id)
@@ -99,7 +101,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 1. Validar token
-  const { data: convite, error: cErr } = await supabase
+  const { data: convite, error: cErr } = await getSupabase()
     .from('convites_projeto')
     .select('id, projeto_id, respondido')
     .eq('token', token)
@@ -139,7 +141,7 @@ export async function POST(req: NextRequest) {
     notas: est.notas ?? null,
   }))
 
-  const { error: insErr } = await supabase
+  const { error: insErr } = await getSupabase()
     .from('estimativas_colaborador')
     .insert(rows)
 
@@ -148,7 +150,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Marcar convite como respondido
-  await supabase
+  await getSupabase()
     .from('convites_projeto')
     .update({ respondido: true, respondido_em: new Date().toISOString() })
     .eq('id', convite.id)
@@ -167,12 +169,12 @@ export async function POST(req: NextRequest) {
   }
 
   // 6. Verificar se todos responderam
-  const { count: total } = await supabase
+  const { count: total } = await getSupabase()
     .from('convites_projeto')
     .select('*', { count: 'exact', head: true })
     .eq('projeto_id', convite.projeto_id)
 
-  const { count: respondidos } = await supabase
+  const { count: respondidos } = await getSupabase()
     .from('convites_projeto')
     .select('*', { count: 'exact', head: true })
     .eq('projeto_id', convite.projeto_id)
