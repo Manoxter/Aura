@@ -379,46 +379,103 @@ export default function ProjetoDashboard({ params }: { params: { projetoId: stri
                 </Link>
             </header>
 
-            {/* ── SIERPINSKI MESH — Board de Controle Fractal ── */}
+            {/* ── TM ESCALENO + ALERT CENTER — Board de Controle ── */}
             {sprintsData.length > 0 && (
-                <section className="rounded-2xl border border-white/5 bg-[#0A0E12]/80 backdrop-blur-xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Cpu className="h-4 w-4 text-blue-400" />
-                            Malha Sierpinski — {sprintsData.length} Sprints
-                        </h2>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                            <span>Nível {Math.max(1, Math.ceil(Math.log2(Math.max(sprintsData.length, 2))))}</span>
-                            <span className="text-slate-700">|</span>
-                            <span>{sprintsData.filter(s => s.estado === 'concluido').length} concluídos</span>
-                            <span className="text-slate-700">|</span>
-                            <span>{sprintsData.filter(s => s.estado === 'ativo').length} ativo</span>
+                <section className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4">
+                    {/* TM Central com fractais Sierpinski */}
+                    <div className="rounded-2xl border border-white/5 bg-[#0A0E12]/80 backdrop-blur-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <Cpu className="h-4 w-4 text-blue-400" />
+                                Triângulo Mestre — {sprintsData.length} Sprints
+                            </h2>
+                            <span className="text-[10px] text-slate-600 font-mono">
+                                Click sprint → drill-down
+                            </span>
+                        </div>
+                        <div className="flex justify-center">
+                            <SierpinskiMesh
+                                sprints={sprintsData}
+                                projetoId={params.projetoId}
+                                width={520}
+                                height={420}
+                            />
                         </div>
                     </div>
-                    <div className="flex justify-center">
-                        <SierpinskiMesh
-                            sprints={sprintsData}
-                            onSprintClick={(id) => setSelectedSprintId(prev => prev === id ? null : id)}
-                            selectedSprintId={selectedSprintId}
-                            width={580}
-                            height={460}
-                        />
-                    </div>
-                    {/* Sprint Sanfona — Tela 3 Drill-Down Completa */}
-                    {selectedSprintId && (() => {
-                        const sprint = sprintsData.find(s => s.id === selectedSprintId)
-                        if (!sprint) return null
-                        return (
-                            <div className="mt-4">
-                                <SprintSanfona
-                                    sprint={sprint}
-                                    tarefas={sprintTarefas}
-                                    projetoId={params.projetoId}
-                                    onClose={() => setSelectedSprintId(null)}
-                                />
+
+                    {/* Alert Center + Métricas (lateral) */}
+                    <div className="space-y-4">
+                        {/* Alert Center */}
+                        <div className="rounded-2xl border border-white/5 bg-[#0A0E12]/80 backdrop-blur-xl p-4">
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">Alert Center</h3>
+                            <div className="space-y-2">
+                                {sprintsData
+                                    .filter(s => s.feverZone === 'vermelho' || s.feverZone === 'preto')
+                                    .map(s => (
+                                        <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-rose-500/5 border border-rose-500/10">
+                                            <AlertCircle className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                                            <span className="text-xs text-rose-300 truncate">
+                                                S{s.ordem}: {s.nome} — buffer {Math.round((s.buffer_consumido / Math.max(s.buffer_original, 1)) * 100)}%
+                                            </span>
+                                        </div>
+                                    ))
+                                }
+                                {sprintsData
+                                    .filter(s => s.feverZone === 'amarelo')
+                                    .map(s => (
+                                        <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                                            <Lightbulb className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                                            <span className="text-xs text-amber-300 truncate">
+                                                S{s.ordem}: atenção — buffer {Math.round((s.buffer_consumido / Math.max(s.buffer_original, 1)) * 100)}%
+                                            </span>
+                                        </div>
+                                    ))
+                                }
+                                {sprintsData.every(s => s.feverZone === 'verde' || s.feverZone === 'azul') && (
+                                    <p className="text-xs text-emerald-400/60 text-center py-2">Nenhum alerta ativo</p>
+                                )}
                             </div>
-                        )
-                    })()}
+                        </div>
+
+                        {/* Project Metrics */}
+                        <div className="rounded-2xl border border-white/5 bg-[#0A0E12]/80 backdrop-blur-xl p-4">
+                            <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-3">Project Metrics</h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-slate-500">IQ</span>
+                                    <span className="text-sm font-mono font-bold text-white">{iq ?? '—'}%</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-slate-500">Sprints</span>
+                                    <span className="text-sm font-mono text-slate-300">
+                                        {sprintsData.filter(s => s.estado === 'concluido').length}/{sprintsData.length}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-slate-500">Sprint Ativo</span>
+                                    <span className="text-sm text-blue-400 truncate max-w-[140px]">
+                                        {sprintsData.find(s => s.estado === 'ativo')?.nome ?? 'Nenhum'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-slate-500">Buffer Global</span>
+                                    <span className="text-sm font-mono font-bold text-white">
+                                        {(() => {
+                                            const totalB = sprintsData.reduce((a, s) => a + s.buffer_original, 0)
+                                            const consB = sprintsData.reduce((a, s) => a + s.buffer_consumido, 0)
+                                            return totalB > 0 ? `${Math.round((consB / totalB) * 100)}%` : '—'
+                                        })()}
+                                    </span>
+                                </div>
+                                {prazoBase && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-xs text-slate-500">Prazo Base</span>
+                                        <span className="text-sm font-mono text-slate-400">{prazoBase}d</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </section>
             )}
 
