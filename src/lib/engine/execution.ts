@@ -1,5 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { checkCDTExistence } from './crisis'
+import { checkCDTExistence, checkCETDupla } from './crisis'
 import { getDefaultContingencia } from '../calibration/setor-config'
 import { classificarCandidatoCEt, type ZonaOperacional } from './zones'
 

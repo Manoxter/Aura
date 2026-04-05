@@ -10,17 +10,28 @@ import { useAuth } from '@/context/AuthContext'
 import { performLogout } from '@/lib/auth/logout'
 import { useToast } from '@/hooks/useToast'
 
-type Projeto = {
+type FeverZone = 'azul' | 'verde' | 'amarelo' | 'vermelho' | 'preto'
+
+type ProjetoPortfolio = {
   id: string
   nome: string
   status: string
+  prazo_total: number | null
+  orcamento_total: number | null
+  // Computed
+  sprintCount: number
+  sprintAtivo: string | null
+  bufferPct: number
+  feverZone: FeverZone
+  iq: number
+  klaussSummary: string
 }
 
 export default function Home() {
   const router = useRouter()
   const { toast } = useToast()
   const { session, loading: authLoading } = useAuth()
-  const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [projetos, setProjetos] = useState<ProjetoPortfolio[]>([])
   const [loading, setLoading] = useState(true)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [userId, setUserId] = useState<string | null>(null)
@@ -65,11 +76,66 @@ export default function Home() {
 
       const { data, error: pError } = await supabase
         .from('projetos')
-        .select('id, nome, status')
+        .select('id, nome, status, prazo_total, orcamento_total')
         .order('criado_em', { ascending: false })
 
       if (pError) throw pError
-      if (data && isMounted.current) setProjetos(data)
+      if (!data || !isMounted.current) return
+
+      // Enrich with sprint data for fever/buffer calculation
+      const enriched: ProjetoPortfolio[] = await Promise.all(
+        data.map(async (p) => {
+          const { data: sprints } = await supabase
+            .from('sprints_fractais')
+            .select('nome, estado, buffer_original, buffer_consumido')
+            .eq('projeto_id', p.id)
+
+          const sprintList = sprints ?? []
+          const sprintAtivo = sprintList.find(s => s.estado === 'ativo')
+          const totalBuffer = sprintList.reduce((a, s) => a + (Number(s.buffer_original) || 0), 0)
+          const consumedBuffer = sprintList.reduce((a, s) => a + (Number(s.buffer_consumido) || 0), 0)
+          const bufferPct = totalBuffer > 0 ? (consumedBuffer / totalBuffer) * 100 : 0
+
+          let feverZone: FeverZone = 'verde'
+          if (bufferPct < 0) feverZone = 'azul'
+          else if (bufferPct <= 33) feverZone = 'verde'
+          else if (bufferPct <= 66) feverZone = 'amarelo'
+          else if (bufferPct <= 100) feverZone = 'vermelho'
+          else feverZone = 'preto'
+
+          // Simple IQ approximation (100% = on track)
+          const concluidos = sprintList.filter(s => s.estado === 'concluido').length
+          const iq = sprintList.length > 0
+            ? Math.round(((concluidos / sprintList.length) * 50 + 50) * (1 - bufferPct / 200))
+            : 100
+
+          // Klauss summary by zone
+          const klaussSummary = feverZone === 'azul'
+            ? 'Remissão ativa. Projeto devolvendo buffer.'
+            : feverZone === 'verde'
+            ? 'Execução dentro do esperado. Buffer intacto.'
+            : feverZone === 'amarelo'
+            ? `Atenção: buffer a ${Math.round(bufferPct)}%. Monitorar ${sprintAtivo?.nome ?? 'sprint ativo'}.`
+            : feverZone === 'vermelho'
+            ? `Crítico: buffer a ${Math.round(bufferPct)}%. ${sprintAtivo?.nome ?? 'Sprint'} sob pressão.`
+            : 'Buffer esgotado. Castle ativo. Ação imediata necessária.'
+
+          return {
+            ...p,
+            sprintCount: sprintList.length,
+            sprintAtivo: sprintAtivo?.nome ?? null,
+            bufferPct,
+            feverZone,
+            iq,
+            klaussSummary,
+          }
+        })
+      )
+
+      // Sort by buffer consumption DESC (highest risk first) — MATED ranking
+      enriched.sort((a, b) => b.bufferPct - a.bufferPct)
+
+      if (isMounted.current) setProjetos(enriched)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('[Home] Erro ao carregar dados:', err)
@@ -141,6 +207,14 @@ export default function Home() {
     await performLogout(router)
   }
 
+  const feverColors: Record<FeverZone, { dot: string; border: string; bg: string; text: string; label: string }> = {
+    azul:     { dot: 'bg-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/5', text: 'text-cyan-300', label: 'REMISSÃO' },
+    verde:    { dot: 'bg-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', text: 'text-emerald-300', label: 'SAUDÁVEL' },
+    amarelo:  { dot: 'bg-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-300', label: 'ATENÇÃO' },
+    vermelho: { dot: 'bg-rose-500', border: 'border-rose-500/30', bg: 'bg-rose-500/5', text: 'text-rose-300', label: 'CRÍTICO' },
+    preto:    { dot: 'bg-slate-400', border: 'border-slate-500/30', bg: 'bg-slate-500/5', text: 'text-slate-300', label: 'COLAPSO' },
+  }
+
   const statusLabel = (s: string) => {
     switch (s) {
       case 'setup': return { text: 'Setup', color: 'bg-amber-500/10 text-amber-400' }
@@ -196,7 +270,7 @@ export default function Home() {
                   {projetos.length} ACTIVE
                 </span>
               </h2>
-              <p className="text-sm text-slate-500">Gerenciamento centralizado de rascunhos e projetos em execução.</p>
+              <p className="text-sm text-slate-500">Ranqueado por risco — o que mais ameaça aparece primeiro.</p>
             </div>
           </div>
 
@@ -225,60 +299,85 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-4">
               {projetos.map((p, idx) => {
-                const st = statusLabel(p.status)
                 const isSetup = p.status === 'setup'
                 const targetHref = isSetup ? `/${p.id}/setup/tap` : `/${p.id}`
+                const fc = feverColors[p.feverZone]
 
                 return (
-                  <div 
-                    key={p.id} 
-                    className="relative group animate-in zoom-in-95 duration-500 opacity-0 fill-mode-forwards"
-                    style={{ animationDelay: `${idx * 50}ms`, opacity: 1 }}
+                  <div
+                    key={p.id}
+                    className="relative group animate-in fade-in slide-in-from-bottom-2 duration-500"
+                    style={{ animationDelay: `${idx * 80}ms` }}
                   >
                     <Link
                       href={targetHref}
-                      className="block h-full bg-slate-900/40 backdrop-blur-xl border border-white/5 hover:border-blue-500/40 rounded-[32px] p-8 transition-all hover:shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.1)] hover:-translate-y-2 relative overflow-hidden group/card"
+                      className={`block backdrop-blur-xl ${fc.bg} ${fc.border} border rounded-2xl p-6 transition-all hover:shadow-lg hover:-translate-y-0.5 relative overflow-hidden`}
                     >
-                      {/* Card Shine */}
-                      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-                      
-                      <div className="flex justify-between items-start mb-6">
-                        <div className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border ${st.color} shadow-sm transition-all group-hover/card:scale-105`}>
-                          {st.text}
+                      <div className="flex items-start gap-4">
+                        {/* Fever dot */}
+                        <div className="pt-1.5">
+                          <div className={`w-3 h-3 rounded-full ${fc.dot} ${p.feverZone === 'vermelho' || p.feverZone === 'preto' ? 'animate-pulse' : ''}`} />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-lg font-bold text-white truncate">{p.nome}</h3>
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${fc.text} bg-white/5`}>
+                              {fc.label}
+                            </span>
+                          </div>
+
+                          {/* Klauss summary */}
+                          <p className="text-sm text-slate-400 mb-3 line-clamp-1">
+                            {p.klaussSummary}
+                          </p>
+
+                          {/* Metrics row */}
+                          <div className="flex items-center gap-6 text-xs">
+                            {/* Buffer bar */}
+                            <div className="flex items-center gap-2 flex-1 max-w-[200px]">
+                              <span className="text-slate-500 font-mono">Buffer</span>
+                              <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${fc.dot}`}
+                                  style={{ width: `${Math.min(100, Math.max(0, p.bufferPct))}%` }}
+                                />
+                              </div>
+                              <span className={`font-mono font-bold ${fc.text}`}>
+                                {Math.round(p.bufferPct)}%
+                              </span>
+                            </div>
+
+                            {/* IQ */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-500 font-mono">IQ</span>
+                              <span className="font-mono font-bold text-white">{p.iq}%</span>
+                            </div>
+
+                            {/* Sprints */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-slate-500 font-mono">Sprints</span>
+                              <span className="font-mono font-bold text-slate-300">{p.sprintCount}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Arrow + delete */}
+                        <div className="flex items-center gap-2 pt-1">
+                          <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-white transition-colors" />
                         </div>
                       </div>
-
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-white group-hover/card:text-blue-400 transition-colors leading-tight">
-                          {p.nome}
-                        </h3>
-                        <p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest flex items-center gap-2">
-                          ID: {p.id.split('-')[0]} <span className="text-slate-800">|</span> CREATED: OK
-                        </p>
-                      </div>
-
-                      <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-500 group-hover/card:text-blue-400 transition-all uppercase tracking-widest flex items-center gap-2">
-                          {isSetup ? 'Setup Progress' : 'Ver Commander'}
-                          <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${isSetup ? 'group-hover/card:translate-x-1' : 'group-hover/card:rotate-[-45deg]'}`} />
-                        </span>
-                        
-                        {isSetup && (
-                           <div className="h-1.5 w-16 bg-slate-800 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-500 w-1/3 animate-pulse" />
-                           </div>
-                        )}
-                      </div>
                     </Link>
-                    
+
                     <button
                       onClick={(e) => deleteProject(e, p.id)}
-                      className="absolute top-8 right-8 text-slate-700 hover:text-rose-500 transition-all p-2 z-20 group-hover:scale-110 active:scale-95"
-                      title="Excluir Definitivamente"
+                      className="absolute top-6 right-14 text-slate-700 hover:text-rose-500 transition-all p-1 z-20 opacity-0 group-hover:opacity-100"
+                      title="Excluir"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 )
