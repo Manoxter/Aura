@@ -21,6 +21,8 @@ import { traduzirCDT } from '@/lib/engine/traducao'
 import { DrawerPanel } from '@/components/ui/DrawerPanel'
 import { SetupStepper } from '@/components/Setup/SetupStepper'
 import { useSetupCompletion } from '@/hooks/useSetupCompletion'
+import { SierpinskiMesh, type SprintData, type FeverZone as SierpinskiFeverZone } from '@/components/aura/SierpinskiMesh'
+import { supabase } from '@/lib/supabase'
 
 // UX9: Tradução de métricas adimensionais para linguagem PM
 function formatDesvioLado(valor: number, tipo: 'orcamento' | 'prazo' | 'escopo'): string {
@@ -97,6 +99,43 @@ export default function ProjetoDashboard({ params }: { params: { projetoId: stri
     const [simulatedPonto, setSimulatedPonto] = useState({ x: 0.316, y: 0.196 })
     const [drawerOpen, setDrawerOpen]         = useState(false)
     const [drawerTool, setDrawerTool]         = useState<'evento' | 'simulador'>('evento')
+
+    // ── Sierpinski Sprints ───────────────────────────────────────────────────
+    const [sprintsData, setSprintsData] = useState<SprintData[]>([])
+    const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!params.projetoId) return
+        supabase
+            .from('sprints_fractais')
+            .select('id, nome, ordem, estado, buffer_original, buffer_consumido')
+            .eq('projeto_id', params.projetoId)
+            .order('ordem')
+            .then(({ data }) => {
+                if (!data) return
+                const mapped: SprintData[] = data.map(s => {
+                    const bufOrig = Number(s.buffer_original) || 0
+                    const bufCons = Number(s.buffer_consumido) || 0
+                    const pct = bufOrig > 0 ? (bufCons / bufOrig) * 100 : 0
+                    let zone: SierpinskiFeverZone = 'verde'
+                    if (pct < 0) zone = 'azul'
+                    else if (pct <= 33) zone = 'verde'
+                    else if (pct <= 66) zone = 'amarelo'
+                    else if (pct <= 100) zone = 'vermelho'
+                    else zone = 'preto'
+                    return {
+                        id: s.id,
+                        nome: s.nome,
+                        ordem: s.ordem,
+                        estado: s.estado as SprintData['estado'],
+                        buffer_original: bufOrig,
+                        buffer_consumido: bufCons,
+                        feverZone: zone,
+                    }
+                })
+                setSprintsData(mapped)
+            })
+    }, [params.projetoId])
 
     // ── CDT real ─────────────────────────────────────────────────────────────
     const curvaCusto = useMemo(() => {
@@ -313,6 +352,91 @@ export default function ProjetoDashboard({ params }: { params: { projetoId: stri
                     Gerenciar Portfólio
                 </Link>
             </header>
+
+            {/* ── SIERPINSKI MESH — Board de Controle Fractal ── */}
+            {sprintsData.length > 0 && (
+                <section className="rounded-2xl border border-white/5 bg-[#0A0E12]/80 backdrop-blur-xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Cpu className="h-4 w-4 text-blue-400" />
+                            Malha Sierpinski — {sprintsData.length} Sprints
+                        </h2>
+                        <div className="flex items-center gap-3 text-xs text-slate-500">
+                            <span>Nível {Math.max(1, Math.ceil(Math.log2(Math.max(sprintsData.length, 2))))}</span>
+                            <span className="text-slate-700">|</span>
+                            <span>{sprintsData.filter(s => s.estado === 'concluido').length} concluídos</span>
+                            <span className="text-slate-700">|</span>
+                            <span>{sprintsData.filter(s => s.estado === 'ativo').length} ativo</span>
+                        </div>
+                    </div>
+                    <div className="flex justify-center">
+                        <SierpinskiMesh
+                            sprints={sprintsData}
+                            onSprintClick={(id) => setSelectedSprintId(prev => prev === id ? null : id)}
+                            selectedSprintId={selectedSprintId}
+                            width={580}
+                            height={460}
+                        />
+                    </div>
+                    {/* Sprint Sanfona (Tela 3 preview) */}
+                    {selectedSprintId && (() => {
+                        const sprint = sprintsData.find(s => s.id === selectedSprintId)
+                        if (!sprint) return null
+                        const bufPct = sprint.buffer_original > 0
+                            ? Math.round((sprint.buffer_consumido / sprint.buffer_original) * 100)
+                            : 0
+                        const feverLabel = sprint.feverZone === 'azul' ? 'Remissão' : sprint.feverZone === 'verde' ? 'Saudável' : sprint.feverZone === 'amarelo' ? 'Atenção' : sprint.feverZone === 'vermelho' ? 'Crítico' : 'Colapso'
+                        return (
+                            <div className="mt-4 rounded-xl border border-white/5 bg-[#0F1318]/80 backdrop-blur-xl p-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                                        Sprint {sprint.ordem} — {sprint.nome}
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                                            sprint.feverZone === 'verde' ? 'bg-emerald-500/10 text-emerald-400' :
+                                            sprint.feverZone === 'amarelo' ? 'bg-amber-500/10 text-amber-400' :
+                                            sprint.feverZone === 'vermelho' ? 'bg-rose-500/10 text-rose-400' :
+                                            sprint.feverZone === 'azul' ? 'bg-cyan-500/10 text-cyan-400' :
+                                            'bg-slate-500/10 text-slate-400'
+                                        }`}>
+                                            {feverLabel}
+                                        </span>
+                                    </h3>
+                                    <button onClick={() => setSelectedSprintId(null)} className="text-slate-500 hover:text-white text-xs">✕</button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 text-center">
+                                    <div className="bg-[#05080A] rounded-lg p-3">
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Buffer</p>
+                                        <p className="text-lg font-bold font-mono text-white">{bufPct}%</p>
+                                        <div className="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                                            <div className={`h-full rounded-full ${
+                                                sprint.feverZone === 'verde' ? 'bg-emerald-400' :
+                                                sprint.feverZone === 'amarelo' ? 'bg-amber-400' :
+                                                sprint.feverZone === 'vermelho' ? 'bg-rose-500' :
+                                                sprint.feverZone === 'azul' ? 'bg-cyan-400' : 'bg-slate-500'
+                                            }`} style={{ width: `${Math.min(100, Math.max(0, bufPct))}%` }} />
+                                        </div>
+                                    </div>
+                                    <div className="bg-[#05080A] rounded-lg p-3">
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Estado</p>
+                                        <p className={`text-lg font-bold ${
+                                            sprint.estado === 'concluido' ? 'text-emerald-400' :
+                                            sprint.estado === 'ativo' ? 'text-blue-400' : 'text-slate-500'
+                                        }`}>
+                                            {sprint.estado === 'concluido' ? '✓ Concluído' : sprint.estado === 'ativo' ? '● Ativo' : '○ Futuro'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-[#05080A] rounded-lg p-3">
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-1">Buffer Disp.</p>
+                                        <p className="text-lg font-bold font-mono text-white">
+                                            {Math.max(0, sprint.buffer_original - sprint.buffer_consumido).toFixed(0)}h
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    })()}
+                </section>
+            )}
 
             {/* ── SetupStepper (quando setup incompleto) ── */}
             {setupPercentual < 100 && (
