@@ -299,93 +299,50 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            {/* Tabela Portfolio Glassmorphism — Layer 1 */}
             <div className="rounded-2xl border border-white/5 bg-[#0A0E12]/80 backdrop-blur-xl overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-white/5">
                     <th className="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Projeto</th>
                     <th className="text-left px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Status</th>
-                    <th className="text-left px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 min-w-[160px]">Health</th>
-                    <th className="text-right px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Prog</th>
-                    <th className="text-right px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hidden md:table-cell">Budget</th>
-                    <th className="text-right px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 hidden lg:table-cell">Prazo</th>
-                    <th className="px-3 py-3 w-8"></th>
+                    <th className="text-left px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 min-w-[140px]">Health</th>
+                    <th className="text-right px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">IQ</th>
+                    <th className="px-3 py-3 w-8" />
                   </tr>
                 </thead>
                 <tbody>
-                  {projetos.map((p, idx) => {
+                  {projetos.map((p) => {
                     const isSetup = p.status === 'setup'
-                    const targetHref = isSetup ? `/${p.id}/setup/tap` : `/${p.id}`
+                    const href = isSetup ? '/' + p.id + '/setup/tap' : '/' + p.id
                     const fc = feverColors[p.feverZone]
                     const st = statusLabel(p.status)
-
                     return (
-                      <tr
-                        key={p.id}
-                        onClick={() => router.push(targetHref)}
-                        className="border-b border-white/[0.03] hover:bg-white/[0.02] cursor-pointer transition-colors group animate-in fade-in duration-300"
-                        style={{ animationDelay: `${idx * 60}ms` }}
-                      >
-                        {/* Nome + Klauss summary */}
+                      <tr key={p.id} onClick={() => router.push(href)} className="border-b border-white/[0.03] hover:bg-white/[0.02] cursor-pointer transition-colors group">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${fc.dot} ${p.feverZone === 'vermelho' || p.feverZone === 'preto' ? 'animate-pulse' : ''}`} />
-                            <div className="min-w-0">
+                            <div className={'w-2.5 h-2.5 rounded-full shrink-0 ' + fc.dot} />
+                            <div>
                               <p className="text-sm font-bold text-white truncate group-hover:text-blue-400 transition-colors">{p.nome}</p>
-                              <p className="text-[11px] text-slate-500 truncate max-w-[280px]">{p.klaussSummary}</p>
+                              <p className="text-[11px] text-slate-500 truncate max-w-[260px]">{p.klaussSummary}</p>
                             </div>
                           </div>
                         </td>
-
-                        {/* Status badge */}
                         <td className="px-3 py-4">
-                          <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${st.color}`}>
-                            {st.text}
-                          </span>
+                          <span className={'text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ' + st.color}>{st.text}</span>
                         </td>
-
-                        {/* Health bar */}
                         <td className="px-3 py-4">
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-slate-800/60 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-500 ${fc.dot}`}
-                                style={{ width: `${Math.min(100, Math.max(2, p.bufferPct))}%` }}
-                              />
+                              <div className={'h-full rounded-full ' + fc.dot} style={{ width: Math.min(100, Math.max(2, p.bufferPct)) + '%' }} />
                             </div>
-                            <span className={`text-xs font-mono font-bold ${fc.text} w-10 text-right`}>
-                              {Math.round(p.bufferPct)}%
-                            </span>
+                            <span className={'text-xs font-mono font-bold w-10 text-right ' + fc.text}>{Math.round(p.bufferPct)}%</span>
                           </div>
                         </td>
-
-                        {/* Progress */}
                         <td className="px-3 py-4 text-right">
                           <span className="text-sm font-mono font-bold text-white">{p.iq}%</span>
                         </td>
-
-                        {/* Budget */}
-                        <td className="px-3 py-4 text-right hidden md:table-cell">
-                          <span className="text-sm font-mono text-slate-400">
-                            {p.orcamento_total ? `R$${(p.orcamento_total / 1000).toFixed(0)}k` : '—'}
-                          </span>
-                        </td>
-
-                        {/* Due */}
-                        <td className="px-3 py-4 text-right hidden lg:table-cell">
-                          <span className="text-sm font-mono text-slate-500">
-                            {p.prazo_total ? `${p.prazo_total}d` : '—'}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
                         <td className="px-3 py-4">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteProject(e, p.id) }}
-                            className="text-slate-700 hover:text-rose-500 transition-all p-1 opacity-0 group-hover:opacity-100"
-                            title="Excluir"
-                          >
+                          <button onClick={(e) => deleteProject(e, p.id)} className="text-slate-700 hover:text-rose-500 transition-all p-1 opacity-0 group-hover:opacity-100">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </td>
