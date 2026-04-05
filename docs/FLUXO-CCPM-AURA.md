@@ -37,8 +37,14 @@
 ```
 ETAPA 1: TAP (PM define projeto)
   ↓ Nome, prazo contratual, orçamento total, contingência %
-  ↓ Data início, regime de trabalho (h/dia, sábado)
-  ↓ Salva em: projetos
+  ↓ Data início, data fim
+  ↓ "Inclui sábado?" [toggle, default: não]
+  ↓ "Conectar ClickUp?" [botão opcional]
+  ↓ Sistema deduz: 8h/dia, seg-sex, feriados nacionais automáticos
+  ↓ SEM tela de calendário separada — tudo dentro do TAP
+  ↓ Se conectou ClickUp → importa sprints/tarefas automaticamente
+  ↓ Se não → fluxo manual (Etapas 2-4)
+  ↓ Salva em: projetos (com unidade_tempo='dias', horas_por_dia=8)
   
 ETAPA 2: ESCOPO (PM define entregas/milestones)
   ↓ Define N sprints como MILESTONES (entregas)
