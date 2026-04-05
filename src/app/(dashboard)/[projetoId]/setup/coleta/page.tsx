@@ -97,11 +97,29 @@ export default function ColetaPage() {
 
   const handleCalcularCCPM = async () => {
     setCalculando(true)
-    // TODO: Chamar pipeline-ccpm.ts aqui
-    // Por enquanto, navega pro dashboard
-    setTimeout(() => {
-      router.push('/' + projetoId)
-    }, 2000)
+
+    // Buscar tenant_id
+    const { data: proj } = await supabase.from('projetos').select('tenant_id').eq('id', projetoId).single()
+    if (!proj) { setCalculando(false); return }
+
+    try {
+      const res = await fetch('/api/ccpm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projetoId, tenantId: proj.tenant_id }),
+      })
+      const data = await res.json()
+
+      if (data.success) {
+        router.push('/' + projetoId)
+      } else {
+        alert('Erro no cálculo CCPM: ' + (data.error || 'desconhecido'))
+        setCalculando(false)
+      }
+    } catch {
+      alert('Erro de conexão ao calcular CCPM')
+      setCalculando(false)
+    }
   }
 
   if (loading) {

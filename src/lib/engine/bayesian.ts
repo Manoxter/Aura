@@ -57,9 +57,41 @@ const SECTOR_PRIORS: Record<string, BayesianPrior> = {
 
 /**
  * getDefaultPrior — Retorna prior por setor. Fallback para 'geral'.
+ * Usa valores hardcoded (Standish CHAOS).
  */
 export function getDefaultPrior(setor: string): BayesianPrior {
     return SECTOR_PRIORS[setor] ?? SECTOR_PRIORS.geral
+}
+
+/**
+ * getPriorFromDB — Busca prior da tabela calibration_priors.
+ * Se não encontrar, retorna hardcoded via getDefaultPrior().
+ * Priors do DB são atualizados a cada projeto arquivado.
+ */
+export async function getPriorFromDB(
+    supabase: { from: (table: string) => { select: (cols: string) => { eq: (col: string, val: string) => { eq: (col: string, val: string) => { maybeSingle: () => Promise<{ data: Record<string, unknown> | null }> } } } } },
+    tenantId: string,
+    setor: string
+): Promise<BayesianPrior> {
+    const { data } = await supabase
+        .from('calibration_priors')
+        .select('media_custo, sigma_custo, media_prazo, sigma_prazo, num_projetos')
+        .eq('tenant_id', tenantId)
+        .eq('setor', setor)
+        .maybeSingle()
+
+    if (data && Number(data.num_projetos) > 0) {
+        return {
+            setor,
+            media_C: Number(data.media_custo),
+            sigma_C: Number(data.sigma_custo),
+            media_P: Number(data.media_prazo),
+            sigma_P: Number(data.sigma_prazo),
+            n_observacoes: Number(data.num_projetos),
+        }
+    }
+
+    return getDefaultPrior(setor)
 }
 
 /**

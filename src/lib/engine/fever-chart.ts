@@ -105,11 +105,22 @@ export function buildFeverPoint(
  * @param desvio - desvio padrão
  * @param assimetria - fator de assimetria pessimista (default: 1.5)
  */
+// Seeded PRNG (mulberry32) para reprodutibilidade em debugging
+let _seed = 0
+export function setMonteCarloSeed(seed: number): void { _seed = seed }
+function seededRandom(): number {
+    if (_seed === 0) return Math.random() // sem seed = aleatório real
+    _seed |= 0; _seed = _seed + 0x6D2B79F5 | 0
+    let t = Math.imul(_seed ^ _seed >>> 15, 1 | _seed)
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t
+    return ((t ^ t >>> 14) >>> 0) / 4294967296
+}
+
 export function sampleLogNormal(media: number, desvio: number, assimetria: number = 1.5): number {
-    // Box-Muller para gerar normal
-    const u1 = Math.random()
-    const u2 = Math.random()
-    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+    // Box-Muller para gerar normal (com seed opcional)
+    const u1 = seededRandom()
+    const u2 = seededRandom()
+    const z = Math.sqrt(-2 * Math.log(Math.max(u1, 1e-10))) * Math.cos(2 * Math.PI * u2)
 
     // Aplicar assimetria: valores positivos (pessimistas) são amplificados
     const z_assimetrico = z > 0 ? z * assimetria : z
