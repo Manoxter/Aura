@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import {
-    FileText, Calendar, Activity, DollarSign,
-    Settings, Users, LineChart, Columns3, AlertCircle, Siren, ShieldAlert,
+    FileText, DollarSign,
+    Settings, Users, LineChart, Columns3,
     Layers, Clock, FlaskConical, Menu, X, Palette, LogOut, CreditCard, Command,
     LayoutGrid, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react'
@@ -143,14 +143,6 @@ export function Sidebar() {
     const setupDone = setupItems.filter(Boolean).length
     const setupProgress = Math.round((setupDone / 4) * 100)
 
-    // MOTOR blocked if SETUP < 60%
-    const motorBlocked = setupPercent < 60
-
-    // MOTOR group progress
-    const motorItems = [isFuncoesReady, isMotorReady]
-    const motorDone = motorItems.filter(Boolean).length
-    const motorProgress = Math.round((motorDone / motorItems.length) * 100)
-
     const sidebarWidth = isCollapsed ? 'w-14' : 'w-64'
 
     return (
@@ -246,14 +238,6 @@ export function Sidebar() {
                             collapsed={isCollapsed}
                         />
                         <SidebarItem
-                            label="Calendário"
-                            icon={Calendar}
-                            href={`/${projetoId}/setup/calendario`}
-                            status={setupItemStatus(isCalendarioReady)}
-                            isActive={pathname === `/${projetoId}/setup/calendario`}
-                            collapsed={isCollapsed}
-                        />
-                        <SidebarItem
                             label="Tarefas e Diagramas"
                             icon={Clock}
                             href={`/${projetoId}/setup/tarefas-diagramas`}
@@ -267,33 +251,6 @@ export function Sidebar() {
                             href={`/${projetoId}/setup/orcamento`}
                             status={setupItemStatus(isOrcamentoReady)}
                             isActive={pathname === `/${projetoId}/setup/orcamento`}
-                            collapsed={isCollapsed}
-                        />
-                    </SidebarGroup>
-
-                    {/* ── GRUPO: MOTOR ── */}
-                    <SidebarGroup
-                        label="MOTOR"
-                        progressPercent={motorProgress}
-                        locked={motorBlocked}
-                        collapsed={isCollapsed}
-                    >
-                        <SidebarItem
-                            label="Funções Motor"
-                            icon={Activity}
-                            href={`/${projetoId}/setup/funcoes`}
-                            status={setupItemStatus(isFuncoesReady)}
-                            isActive={pathname === `/${projetoId}/setup/funcoes`}
-                            locked={motorBlocked}
-                            collapsed={isCollapsed}
-                        />
-                        <SidebarItem
-                            label="Triângulo Matriz"
-                            icon={Activity}
-                            href={`/${projetoId}/motor/triangulo-matriz`}
-                            status={isMotorReady ? 'done' : motorBlocked ? 'grey' : 'warning'}
-                            isActive={pathname === `/${projetoId}/motor/triangulo-matriz`}
-                            locked={motorBlocked}
                             collapsed={isCollapsed}
                         />
                     </SidebarGroup>
@@ -353,30 +310,6 @@ export function Sidebar() {
                             href={`/${projetoId}/governanca/kanban`}
                             status="grey"
                             isActive={pathname === `/${projetoId}/governanca/kanban`}
-                            collapsed={isCollapsed}
-                        />
-                        <SidebarItem
-                            label="Monitor de Razão"
-                            icon={AlertCircle}
-                            href={`/${projetoId}/governanca/relatorios`}
-                            status="grey"
-                            isActive={pathname === `/${projetoId}/governanca/relatorios`}
-                            collapsed={isCollapsed}
-                        />
-                        <SidebarItem
-                            label="Gabinete de Crise"
-                            icon={Siren}
-                            href={`/${projetoId}/governanca/gabinete`}
-                            status="grey"
-                            isActive={pathname.startsWith(`/${projetoId}/governanca/gabinete`)}
-                            collapsed={isCollapsed}
-                        />
-                        <SidebarItem
-                            label="Riscos"
-                            icon={ShieldAlert}
-                            href={`/${projetoId}/governanca/riscos`}
-                            status="grey"
-                            isActive={pathname === `/${projetoId}/governanca/riscos`}
                             collapsed={isCollapsed}
                         />
                     </SidebarGroup>

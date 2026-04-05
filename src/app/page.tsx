@@ -231,6 +231,7 @@ export default function Home() {
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--fever-verde)] opacity-[0.06] blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[var(--fever-vermelho)] opacity-[0.06] blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
+      <div className="aura-bg-logo" />
 
       <div className="w-full max-w-6xl px-6 py-12 relative z-10 flex flex-col min-h-screen">
         <header className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8 animate-in fade-in slide-in-from-top-4 duration-700">

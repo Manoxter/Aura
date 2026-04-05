@@ -613,3 +613,16 @@ body {
   color: var(--text-secondary);
   background: var(--surface-subtle);
 }
+
+/* ── Translucent logo background watermark ── */
+.aura-bg-logo {
+  background-image: url('/logo-aura.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 40%;
+  opacity: 0.03;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}

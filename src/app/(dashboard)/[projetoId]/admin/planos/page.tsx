@@ -157,9 +157,8 @@ export default function AssinaturaPage() {
 
     if (loading) return <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-8 uppercase font-mono tracking-widest text-sm">Carregando Billing...</div>
 
-    // Descobre os termos de exemplo para exibir na prévia do perfil
-    const exemploTermos = SKIN_DICTIONARY[profileType] || SKIN_DICTIONARY['DEFAULT'] || {}
-    const exemplos = Object.entries(exemploTermos).slice(0, 3)
+    // Termos de exemplo do vocabulário ágil (perfil único TECH)
+    const exemplos = Object.entries(SKIN_DICTIONARY).slice(0, 3)
 
     return (
         <div className="min-h-screen bg-slate-950 text-white p-8">

@@ -59,6 +59,9 @@ export const metadata: Metadata = {
     title: seoTitle,
     description: seoDescription,
   },
+  icons: {
+    icon: '/icon-aura.png',
+  },
   robots: {
     index: true,
     follow: true,
@@ -73,6 +76,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/icon-aura.png" type="image/png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

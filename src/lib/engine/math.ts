@@ -1,4 +1,6 @@
 import { Tarefa, CETDuplaResult } from '../types'
+// NOTA: checkCDTExistence é usado para verificações rápidas (single-pass).
+// Para o pipeline completo (bruto + normalizado), usar checkCETDupla via crisis.ts.
 import { checkCDTExistence, generateCrisisReport, checkCETDupla } from './crisis'
 import { getSigmaSync } from '../calibration/sigma-manager'
 import { getDefaultContingencia } from '../calibration/setor-config'

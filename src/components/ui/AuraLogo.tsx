@@ -32,9 +32,11 @@ const AuraLogo = React.memo(function AuraLogo({
 }: AuraLogoProps) {
     const { icon: iconSize, text: textClass, gap } = SIZE_MAP[size]
 
+    const imgSrc = variant === 'icon' ? '/icon-aura.png' : '/logo-aura.png'
+
     const logoImg = (
         <Image
-            src="/logo-aura.png"
+            src={imgSrc}
             alt="Aura"
             width={iconSize}
             height={iconSize}

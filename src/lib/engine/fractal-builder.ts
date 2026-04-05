@@ -12,7 +12,7 @@
  */
 
 import { areaHeron, calcularAngulos, classificarForma, type TriangleShape } from './fractals'
-import { checkCDTExistence } from './crisis'
+import { checkCETDupla } from './crisis'
 import type { FeverZone } from './buffer'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -195,8 +195,12 @@ export function construirFractaisBackward(
     const P_prime = tm.P * razao_P
     const C_prime = tm.C * razao_C
 
-    // ── CEt do fractal ───────────────────────────────────────────────
-    const cet_valida = checkCDTExistence(E_prime, P_prime, C_prime)
+    // ── CEt do fractal (dupla: bruto + normalizado) ──────────────────
+    const cetResult = checkCETDupla(
+      sprint.horas_trabalho, sprint.custo_planejado, horasSprint,
+      E_prime, C_prime, P_prime
+    )
+    const cet_valida = cetResult.valid
 
     // ── Ângulos ──────────────────────────────────────────────────────
     const [alpha, beta, gamma] = calcularAngulos(E_prime, P_prime, C_prime)

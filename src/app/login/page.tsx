@@ -40,6 +40,7 @@ function LoginForm() {
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.07] blur-[120px] bg-[conic-gradient(var(--fever-verde),var(--fever-amarelo),var(--fever-vermelho),var(--fever-verde))]" />
       </div>
+      <div className="aura-bg-logo" />
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
