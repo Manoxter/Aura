@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Activity, Mail, Lock, User, ArrowRight } from 'lucide-react'
+import { Mail, Lock, User, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { AuraLogo } from '@/components/ui/AuraLogo'
 
 export default function RegisterPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -47,10 +48,10 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center bg-slate-900 border border-slate-800 rounded-2xl p-8">
+      <div className="min-h-screen bg-[#05080A] flex items-center justify-center p-4">
+        <div className="w-full max-w-md text-center bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-8">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <Activity className="h-10 w-10 text-emerald-500" />
+            <AuraLogo size="md" variant="icon" />
           </div>
           <h2 className="text-2xl font-bold text-white mb-3">Conta criada!</h2>
           <p className="text-slate-400 mb-6">
@@ -66,17 +67,20 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#05080A] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Fever gradient glow */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.07] blur-[120px] bg-[conic-gradient(var(--fever-verde),var(--fever-amarelo),var(--fever-vermelho),var(--fever-verde))]" />
+      </div>
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Activity className="h-10 w-10 text-blue-500" />
-            <h1 className="text-4xl font-bold text-white tracking-tight">AURA</h1>
+          <div className="flex items-center justify-center mb-4">
+            <AuraLogo size="lg" variant="full" />
           </div>
           <p className="text-slate-400">Crie sua conta para começar</p>
         </div>
 
-        <form onSubmit={handleRegister} className="bg-slate-900 border border-slate-800 rounded-2xl p-8 space-y-6">
+        <form onSubmit={handleRegister} className="bg-slate-900/60 backdrop-blur-xl border border-white/5 rounded-2xl p-8 space-y-6">
           {error && (
             <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm p-3 rounded-lg">
               {error}

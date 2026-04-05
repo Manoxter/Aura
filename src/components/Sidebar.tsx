@@ -116,12 +116,11 @@ export function Sidebar() {
                 >
                     {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </button>
-                <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-800 flex flex-col transition-transform duration-300 md:translate-x-0 md:static md:flex ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0F1318] border-r border-slate-800 flex flex-col transition-transform duration-300 md:translate-x-0 md:static md:flex ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     <div className="h-16 flex items-center px-6 border-b border-slate-800">
-                        <Link href="/" className="hover:opacity-90 transition-opacity">
-                            <AuraLogo size="sm" variant="full" />
-                        </Link>
+                        <AuraLogo size="sm" variant="full" onClick={() => router.push('/')} />
                     </div>
+                    <p className="px-6 pt-1 text-[10px] text-slate-600 tracking-widest uppercase">Powered by TRIQ</p>
                     <div className="p-4 text-slate-400 text-sm">Selecione um projeto para continuar.</div>
                 </aside>
                 {/* Overlay */}
@@ -176,7 +175,7 @@ export function Sidebar() {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 ${sidebarWidth} bg-slate-950 border-r border-slate-800 flex flex-col
+                fixed inset-y-0 left-0 z-50 ${sidebarWidth} bg-[#0F1318] border-r border-slate-800 flex flex-col
                 transition-all duration-300 ease-in-out
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
                 md:translate-x-0 md:static md:flex md:sticky md:top-0 md:h-screen md:shrink-0 md:overflow-y-auto md:z-10
@@ -201,6 +200,11 @@ export function Sidebar() {
                         }
                     </button>
                 </div>
+
+                {/* Powered by TRIQ */}
+                {!isCollapsed && (
+                    <p className="px-4 pt-1 text-[10px] text-slate-600 tracking-widest uppercase">Powered by TRIQ</p>
+                )}
 
                 {/* IQ Badge */}
                 {iq !== null && !isCollapsed && (

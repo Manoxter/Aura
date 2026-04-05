@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Activity, Plus, Trash2, LogOut, ArrowRight, ChevronRight } from 'lucide-react'
+import { Plus, Trash2, LogOut, ArrowRight, ChevronRight } from 'lucide-react'
+import { AuraLogo } from '@/components/ui/AuraLogo'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
@@ -150,24 +151,19 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-slate-50 flex flex-col items-center overflow-x-hidden">
+    <div className="min-h-screen bg-[#05080A] text-slate-50 flex flex-col items-center overflow-x-hidden">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden select-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[var(--fever-verde)] opacity-[0.06] blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[var(--fever-vermelho)] opacity-[0.06] blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       <div className="w-full max-w-6xl px-6 py-12 relative z-10 flex flex-col min-h-screen">
         <header className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-500/20 ring-1 ring-white/10">
-              <Activity className="h-7 w-7 text-white" />
-            </div>
+            <AuraLogo size="lg" variant="full" onClick={() => router.push('/')} />
             <div>
-              <h1 className="text-4xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent uppercase tracking-tighter leading-none">
-                AURA <span className="text-xs font-mono text-blue-500 align-top ml-1 tracking-normal">AIOX</span>
-              </h1>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Sincronização de Triângulos Matriz</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Powered by TRIQ</p>
             </div>
           </div>
           
@@ -215,7 +211,7 @@ export default function Home() {
           ) : projetos.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-12 border-2 border-dashed border-slate-800/50 rounded-[40px] bg-slate-900/20 backdrop-blur-sm group hover:border-blue-500/20 transition-colors duration-500">
               <div className="h-24 w-24 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-inner">
-                <Activity className="h-10 w-10 text-slate-700 group-hover:text-blue-500/50 transition-colors" />
+                <AuraLogo size="lg" variant="icon" />
               </div>
               <h3 className="text-xl font-bold text-slate-400 mb-2">Zero Projetos Detectados</h3>
               <p className="text-slate-500 text-center max-w-sm mb-8 font-medium">
